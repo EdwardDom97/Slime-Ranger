@@ -172,7 +172,7 @@ def game(): #written/supplemented with Andrew from Pygame Discord Community
             
         player_health = 150
         #earthslime_health = 100
-        earthslime_health = 100 
+        enemy_health = 100 
         spell_active = 'None'
         card_active = False
         casts = 0
@@ -262,14 +262,14 @@ def game(): #written/supplemented with Andrew from Pygame Discord Community
             
                         
             if strike_button_rect.collidepoint((mx, my)) and click:
-                earthslime_health -= 5
+                enemy_health -= 5
                 #player_health -= 3
                 
             if castaspell_rect.collidepoint((mx, my)):
                 if click:
                     if card_active != True:
                         if spell_active == 'manashot':
-                            earthslime_health -= 10
+                            enemy_health -= 10
                             #player_health -= 10
                             screen.blit(topcard, casted_spell_rect)
                             casts += 1                   
@@ -284,7 +284,7 @@ def game(): #written/supplemented with Andrew from Pygame Discord Community
                             spell_active = 'None'
                             
                         if spell_active == 'fireball_shot':
-                            earthslime_health -= 15
+                            enemy_health -= 15
                             screen.blit(topcard, casted_spell_rect)
                             casts += 1                   
                             print('your casts are',  casts)
@@ -301,13 +301,13 @@ def game(): #written/supplemented with Andrew from Pygame Discord Community
                 return
                
                 
-            if earthslime_health <= 0:
+            if enemy_health <= 0:
                 earthslime_level += 1
-                earthslime_health = 100 
+                enemy_health = 100 
                 player_level += 1
                 print("the earthslime is Level", earthslime_level)
                 print("the player is Level", player_level)
-                print(earthslime_health)
+                print(enemy_health)
                 player_health += 25
 
             if player_health >= 150:
@@ -329,7 +329,7 @@ def game(): #written/supplemented with Andrew from Pygame Discord Community
             player_health_base = pygame.Rect(100, 175, 150, 27)
             player_health_active = pygame.Rect(100, 175, player_health, 27)
             earthslime_health_base = pygame.Rect(435, 175, 100, 27)
-            earthslime_health_active = pygame.Rect(435, 175, earthslime_health, 27)
+            earthslime_health_active = pygame.Rect(435, 175, enemy_health, 27)
             
             # Here I want to load text to add to my health bars
             health_text = font.render("Hp: " + str(player_health), False, (65,67,69))
