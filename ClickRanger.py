@@ -2,6 +2,8 @@
 
 import pygame, sys
 import random
+import time
+#import time to actually work on this
 
 from pygame.locals import *
 
@@ -19,7 +21,7 @@ clock = pygame.time.Clock()
 
 
 # menuimages
-menuintro = font.render("Click Ranger V 0.02 'COMBAT'", False, (65, 67, 69))
+menuintro = font.render("Click Ranger V 0.03 'COMBAT AND SPELLS'", False, (65, 67, 69))
 start_button = pygame.image.load('graphics/startbutton.png')
 options_button = pygame.image.load('graphics/optionsbutton.png')
 exit_button = pygame.image.load('graphics/exitbutton.png')
@@ -158,10 +160,9 @@ def main_menu():
 
 #
 
-def game(): #written/supplemented with Andrew from Pygame Discord Community
-    #current_state = "player_turn" #Now set to player_turn was "" before
+def game(): #reworked enough to be called my own again. 
     current_state = "Existing"
-    player_health = 150
+    
     
 
  
@@ -169,18 +170,24 @@ def game(): #written/supplemented with Andrew from Pygame Discord Community
 
     if current_state == "Existing": #anything I set before existing will become updated in existing.
 
-            
+        #I need to reorganize some of my variables but will do later
+
         player_health = 150
-        #earthslime_health = 100
         enemy_health = 100 
         spell_active = 'None'
         card_active = False
         casts = 0
-        game_round = 0
+        game_round = 0 #ignoring might remove
         cards_drawn = 0
         running = True       
         player_level = 0
         earthslime_level = 0
+
+        #this is where I will make my enemy attack variable
+        enemy_attacking = True
+        enemy_attack_timer = 3
+        enemy_charge_attack = 0
+
         # Always draw the following
         screen.fill("lightgray")
         screen.blit(cardpanimg, cardpanimg_rect)
@@ -210,6 +217,8 @@ def game(): #written/supplemented with Andrew from Pygame Discord Community
             #earthslime_health = 100 + int(earthslime_level * 2)
             mx, my = pygame.mouse.get_pos()
             click = False
+            enemy_attacking = True
+            
 
             for event in pygame.event.get():
                 if event.type == QUIT:
@@ -321,6 +330,20 @@ def game(): #written/supplemented with Andrew from Pygame Discord Community
 
             #I am going to define player health and enemy slime health here to use pygame rects as hp bars
 
+
+            #Here is where I am going to test/put my if statement for enemy attacks
+            if enemy_attacking:
+                enemy_charge_attack += 1
+                pygame.time.delay(200)
+
+                if enemy_charge_attack == enemy_attack_timer:
+                    player_health -= 2
+                    enemy_charge_attack = 0
+
+                 
+                
+                    
+            
         
 
 
@@ -357,6 +380,7 @@ def game(): #written/supplemented with Andrew from Pygame Discord Community
         
             
             pygame.display.update()
+            clock.tick(0)
 
 def spells_library():
     
