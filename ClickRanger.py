@@ -535,4 +535,4 @@ main_menu()
 #CHANGES AND BUGS AND TODO LIST
 #make a card timer 2/15/23 NULL 02/21/23
 #make an options menu and a spells menu 02/21/23
-#
+#04/23/2023 began a new update 'the wilds' and began to tweak some things.
