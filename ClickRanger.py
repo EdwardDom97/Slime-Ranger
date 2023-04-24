@@ -1,4 +1,6 @@
 #Click Rangers Code rework for better menu, still V 0.01, which is now v 0.02 as of 2/11/23.
+#Making an edit for Click Ranger on 04/23/2023 called "The Wilds" I am adding in another button and game state that will simply allow the player the move around and jump.
+#This is to prepare for an idea I have had in the back of my mind since my last good run with coding
 
 import pygame, sys
 import random
@@ -9,7 +11,7 @@ from pygame.locals import *
 
 pygame.init()
 
-pygame.display.set_caption('Click Ranger V 0.02') #yay we are now 0.01 away from the creation, 1 week in
+pygame.display.set_caption('Click Ranger V 0.04') #yay we are now 0.01 away from the creation, 1 week in
 screen = pygame.display.set_mode((800,600), 0, 32)
 font = pygame.font.SysFont(None, 50)
 clock = pygame.time.Clock()
@@ -21,17 +23,22 @@ clock = pygame.time.Clock()
 
 
 # menuimages
-menuintro = font.render("Click Ranger V 0.03 'COMBAT AND SPELLS'", False, (65, 67, 69))
+menuintro = font.render("Click Ranger V 0.04 'The Wilds'", False, (65, 67, 69))
 start_button = pygame.image.load('graphics/startbutton.png')
 options_button = pygame.image.load('graphics/optionsbutton.png')
 exit_button = pygame.image.load('graphics/exitbutton.png')
 spell_library_button = pygame.image.load('graphics/librarybutton.png')
 menulogo = pygame.image.load('graphics/menulogo.png')
+the_wilds_button = pygame.image.load('graphics/thewildsbutton.png')
 
-#menubuttonrects
-start_button_rect = start_button.get_rect(midleft = (50,250))
-menuintro_rect = menuintro.get_rect(midleft = (50, 150))
-options_rect = options_button.get_rect(midleft = (50, 350))
+
+menuintro_rect = menuintro.get_rect(midleft = (50, 125)) #this is not a button it's the 'background' to the text
+
+#menubuttonrects, I want my buttons listed in order as they also appear on my menu in-game.
+
+start_button_rect = start_button.get_rect(midleft = (50,200)) #starts a card combat game. idea to rename as I go.
+the_wilds_rect = the_wilds_button.get_rect(midleft=(50, 275))
+options_rect = options_button.get_rect(midleft = (50, 365))
 exit_rect = exit_button.get_rect(midleft = (50, 550))
 spelllib_rect = spell_library_button.get_rect(midleft = (50, 450))
 menulogo_rect = menulogo.get_rect(topleft = (325, 200))
@@ -109,6 +116,7 @@ def main_menu():
         
         screen.fill('grey')
         screen.blit(menuintro, menuintro_rect)
+        screen.blit(the_wilds_button, the_wilds_rect)
         screen.blit(start_button, start_button_rect)
         screen.blit(menulogo, menulogo_rect)
         screen.blit(options_button, options_rect)
@@ -152,6 +160,12 @@ def main_menu():
                 if click:
                     pygame.quit()
                     sys.exit()
+
+
+            if the_wilds_rect.collidepoint((mx,my)):
+                if click:
+                    enter_wilds()
+
                     
          
         pygame.display.update()
@@ -257,6 +271,10 @@ def game(): #reworked enough to be called my own again.
                         cards_drawn += 1
                         card_active = False
 
+                        if cards_drawn % 3 == 0:
+                            player_health -= 10
+
+
                         if random_spell == (manashot, manashot_rect):
                             print('manashot was drawn')
                             spell_active = 'manashot'
@@ -271,22 +289,22 @@ def game(): #reworked enough to be called my own again.
             
                         
             if strike_button_rect.collidepoint((mx, my)) and click:
-                enemy_health -= 5
-                #player_health -= 3
+                enemy_health -= 10
+                player_health += 1
                 
             if castaspell_rect.collidepoint((mx, my)):
                 if click:
                     if card_active != True:
                         if spell_active == 'manashot':
                             enemy_health -= 10
-                            #player_health -= 10
+                            player_health += 2
                             screen.blit(topcard, casted_spell_rect)
                             casts += 1                   
                             print('your casts are',  casts)
                             spell_active = 'None'
                             
                         if spell_active == 'healthdrop':
-                            player_health += 30
+                            player_health += 10
                             screen.blit(topcard, casted_spell_rect)
                             casts += 1                   
                             print('your casts are',  casts)
@@ -294,6 +312,7 @@ def game(): #reworked enough to be called my own again.
                             
                         if spell_active == 'fireball_shot':
                             enemy_health -= 15
+                            player_health += 2
                             screen.blit(topcard, casted_spell_rect)
                             casts += 1                   
                             print('your casts are',  casts)
@@ -317,7 +336,7 @@ def game(): #reworked enough to be called my own again.
                 print("the earthslime is Level", earthslime_level)
                 print("the player is Level", player_level)
                 print(enemy_health)
-                player_health += 25
+                player_health -= 25
 
             if player_health >= 150:
                 player_health = 150
@@ -332,13 +351,14 @@ def game(): #reworked enough to be called my own again.
 
 
             #Here is where I am going to test/put my if statement for enemy attacks
-            if enemy_attacking:
-                enemy_charge_attack += 1
-                pygame.time.delay(200)
+            
+            #if enemy_attacking:
+            #    enemy_charge_attack += 1
+            #    pygame.time.delay(200)
 
-                if enemy_charge_attack == enemy_attack_timer:
-                    player_health -= 2
-                    enemy_charge_attack = 0
+            #    if enemy_charge_attack == enemy_attack_timer:
+            #        player_health -= 2
+            #       enemy_charge_attack = 0
 
                  
                 
@@ -380,7 +400,57 @@ def game(): #reworked enough to be called my own again.
         
             
             pygame.display.update()
-            clock.tick(0)
+            clock.tick(30)
+
+
+def enter_wilds():
+    screen.fill("darkgray")
+    wildsbackground = pygame.image.load('graphics/wildsbg.png')
+    
+        
+    screen.blit(menubutton, menubutt_rect)
+    screen.blit(wildsbackground, (0,0))
+    screen.blit(menubutton,menubutt_rect)
+    screen.blit(player_image, (50,450))
+    running = True
+    
+    while running:
+        
+            
+        mx, my = pygame.mouse.get_pos()
+        click = False
+
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+                    
+            if event.type == KEYDOWN:
+                    
+                if event.key == K_ESCAPE:
+                        running = False
+
+                #movement will have to come when my mind has refreshed or whenver I get the time again. Honestly I am surprised I did this much this evening.
+                        
+            if event.type == MOUSEBUTTONDOWN:
+                    
+                if event.button == 1:
+                    click = True
+                
+
+            # No check for current_state, so occurs regardless of state
+            if menubutt_rect.collidepoint((mx, my)):
+                #print("Hey there is collision")
+                if click:
+                    return  # Goes back to main menu, as it is the one that calls game
+                
+
+        pygame.display.update()
+
+
+
+
+
 
 def spells_library():
     
