@@ -10,9 +10,10 @@ import time
 from pygame.locals import *
 
 pygame.init()
-
+screen_width = 1600
+screen_height = 900
 pygame.display.set_caption('Click Ranger V 0.04') #yay we are now 0.01 away from the creation, 1 week in
-screen = pygame.display.set_mode((800,600), 0, 32)
+screen = pygame.display.set_mode((screen_width,screen_height), 0, 32)
 font = pygame.font.SysFont(None, 50)
 clock = pygame.time.Clock()
 
@@ -23,7 +24,7 @@ clock = pygame.time.Clock()
 
 
 # menuimages
-menuintro = font.render("Click Ranger V 0.04 'The Wilds'", False, (65, 67, 69))
+menuintro = font.render("Click Ranger V 0.04 'The Wilds'", False, (180, 180, 165))
 start_button = pygame.image.load('graphics/startbutton.png')
 options_button = pygame.image.load('graphics/optionsbutton.png')
 exit_button = pygame.image.load('graphics/exitbutton.png')
@@ -36,12 +37,14 @@ menuintro_rect = menuintro.get_rect(midleft = (50, 125)) #this is not a button i
 
 #menubuttonrects, I want my buttons listed in order as they also appear on my menu in-game.
 
-start_button_rect = start_button.get_rect(midleft = (50,200)) #starts a card combat game. idea to rename as I go.
-the_wilds_rect = the_wilds_button.get_rect(midleft=(50, 275))
-options_rect = options_button.get_rect(midleft = (50, 365))
-exit_rect = exit_button.get_rect(midleft = (50, 550))
-spelllib_rect = spell_library_button.get_rect(midleft = (50, 450))
-menulogo_rect = menulogo.get_rect(topleft = (325, 200))
+#05/16/2023 I want to play with my menu button locations,perhaps try setting the x value as half of the width of the screen so it's centered. 
+
+start_button_rect = start_button.get_rect(center = (screen_width/2,200)) #starts a card combat game. idea to rename as I go.
+the_wilds_rect = the_wilds_button.get_rect(center = (screen_width/2,275))
+options_rect = options_button.get_rect(center = (screen_width/2,350))
+spelllib_rect = spell_library_button.get_rect(center = (screen_width/2,425))
+exit_rect = exit_button.get_rect(center = (screen_width/2,500))
+menulogo_rect = menulogo.get_rect(topleft = (325, 600))
 
 #Spells Menu images
 bookofspells = pygame.image.load('graphics/bookospells.png')
@@ -68,12 +71,13 @@ enemylevelicon_rect = enemy_level_icon.get_rect(topleft = (435, 270))
 #in-game buttons
 menubutton = pygame.image.load('graphics/menubutton.png')
 drawspellbutton = pygame.image.load('graphics/drawspellbutton.png')
-
 #attack_icon = pygame.image.load('graphics/attack_button.png')
 castaspell_button = pygame.image.load('graphics/castspellbutton.png')
 strike_button = pygame.image.load('graphics/strikebutton.png')
 end_turn_button = pygame.image.load('graphics/endturnbutton.png')
 igattack_icon = pygame.image.load('graphics/ingamegraphics/igattack.png')
+player_info = pygame.image.load('graphics/ingamegraphics/ranger_card.png')
+
 
 #in-game button rects
 endturnbutt_rect = end_turn_button.get_rect(midleft = (250, 150))
@@ -82,6 +86,7 @@ castaspell_rect = castaspell_button.get_rect(midleft = (250, 445))
 strike_button_rect = strike_button.get_rect(midleft = (250, 497))
 menubutt_rect = menubutton.get_rect(midleft = (250, 550))
 #attack_icon_rect = attack_icon.get_rect(midleft = (750, 432))
+player_info_rect = player_info.get_rect(center=(1000,425))
 
 
 
@@ -95,7 +100,7 @@ fireball_shot = pygame.image.load('graphics/cards/fireball.png')
 
 #in-game card rects
 #keep location same for all cards .get_rect(topleft = (505, 370))
-manashot_rect = manashot.get_rect(topleft = (485, 370))
+manashot_rect = manashot.get_rect(topleft = (485, 370))  
 healthdrop_rect = healthdrop.get_rect(topleft = (485, 370))
 sipomana_rect = sipomana.get_rect(topleft = (485, 370))
 topcard_rect = topcard.get_rect(topleft = (50, 375))
@@ -114,7 +119,12 @@ click = False
 def main_menu(): 
     while True:
         
-        screen.fill('grey')
+        mainmenusplash = pygame.image.load('graphics/mainscreensplash.png')
+
+        screen.blit(mainmenusplash, (0,0))
+        
+
+        #screen.fill('grey')
         screen.blit(menuintro, menuintro_rect)
         screen.blit(the_wilds_button, the_wilds_rect)
         screen.blit(start_button, start_button_rect)
@@ -225,7 +235,7 @@ def game(): #reworked enough to be called my own again.
         screen.blit(castaspell_button, castaspell_rect)
         #screen.blit(end_turn_button, endturnbutt_rect)
 
-        
+        #add in a keyevent for I, representing inventory, that when pressed shows the rangers card.
         
         while running:
             #earthslime_health = 100 + int(earthslime_level * 2)
@@ -243,6 +253,9 @@ def game(): #reworked enough to be called my own again.
                     
                     if event.key == K_ESCAPE:
                         running = False
+
+                    if event.key == pygame.K_i:
+                        screen.blit(player_info,player_info_rect)
                         
                 if event.type == MOUSEBUTTONDOWN:
                     
@@ -341,7 +354,8 @@ def game(): #reworked enough to be called my own again.
             if player_health >= 150:
                 player_health = 150
             
-           
+            
+
             #if current_state == "Enemy Attacking":
 
 
@@ -405,7 +419,7 @@ def game(): #reworked enough to be called my own again.
 
 def enter_wilds():
     screen.fill("darkgray")
-    wildsbackground = pygame.image.load('graphics/wildsbg.png')
+    wildsbackground = pygame.image.load('graphics/wildsbg.png') #example to follow like the main menu splash.
     
         
     screen.blit(menubutton, menubutt_rect)
