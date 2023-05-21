@@ -1,10 +1,12 @@
 #Click Rangers Code rework for better menu, still V 0.01, which is now v 0.02 as of 2/11/23.
 #Making an edit for Click Ranger on 04/23/2023 called "The Wilds" I am adding in another button and game state that will simply allow the player the move around and jump.
 #This is to prepare for an idea I have had in the back of my mind since my last good run with coding
+#changed the start button to Card Duel in main menu 05/18/2023
 
 import pygame, sys
 import random
 import time
+import math
 #import time to actually work on this
 
 from pygame.locals import *
@@ -58,6 +60,9 @@ earthslime = pygame.image.load('graphics/earthslime.png')
 ground = pygame.image.load('graphics/grass.png')
 player_level_icon = pygame.image.load('graphics/playerlevelicon.png')
 enemy_level_icon = pygame.image.load('graphics/enemylevelicon.png')
+help_button_icon = pygame.image.load('graphics/helpbutton.png')
+#adding in the player level background to experiment with
+playerlevelbackg = pygame.image.load('graphics/playerlevelbg.png')
 
 
 
@@ -67,6 +72,9 @@ player_rect = player_image.get_rect(midbottom = (110, 250))
 playerlevelicon_rect = player_level_icon.get_rect(topleft = (110, 270))
 earthslime_rect = earthslime.get_rect(midbottom = (450, 250))
 enemylevelicon_rect = enemy_level_icon.get_rect(topleft = (435, 270))
+help_button_rect = help_button_icon.get_rect(topleft = (325,150))
+playerlevelbackg_rect = playerlevelbackg.get_rect(topleft = (100,50))
+
 
 #in-game buttons
 menubutton = pygame.image.load('graphics/menubutton.png')
@@ -97,6 +105,7 @@ cardpanimg = pygame.image.load('graphics/cards/cardpanel.png')
 healthdrop = pygame.image.load('graphics/cards/healthdrop.png')
 sipomana = pygame.image.load('graphics/cards/sipomana.png')
 fireball_shot = pygame.image.load('graphics/cards/fireball.png')
+newcardpanel = pygame.image.load('graphics/cards/newercardpanel.png')
 
 #in-game card rects
 #keep location same for all cards .get_rect(topleft = (505, 370))
@@ -107,6 +116,7 @@ topcard_rect = topcard.get_rect(topleft = (50, 375))
 casted_spell_rect = topcard.get_rect(topleft = (485, 370))
 fireball_shot_rect = fireball_shot.get_rect(topleft = (485, 370))
 cardpanimg_rect = cardpanimg.get_rect(midleft = (0, 445))
+newcardpanel_rect = newcardpanel.get_rect(midleft=(0,screen_height/2))
 
 #going to try to create a list here and use the random code. will do two to start.
 
@@ -214,16 +224,22 @@ def game(): #reworked enough to be called my own again.
 
         # Always draw the following
         screen.fill("lightgray")
-        screen.blit(cardpanimg, cardpanimg_rect)
+
+        #seeing if I can load the player's level background here, update: it works now I need to get both text and image together.
+        screen.blit(newcardpanel,newcardpanel_rect)
+
+        screen.blit(playerlevelbackg,playerlevelbackg_rect)
+        #screen.blit(cardpanimg, cardpanimg_rect)
         
         screen.blit(player_image, player_rect)
         #screen.blit(player_level_icon, playerlevelicon_rect)
         
         screen.blit(earthslime, earthslime_rect)
         #screen.blit(enemy_level_icon, enemylevelicon_rect)
+        screen.blit(help_button_icon,help_button_rect)
 
         
-        screen.blit(ground, ground_rect)
+        #screen.blit(ground, ground_rect)
 
         # want to add my 'draw' button 'menu' button and card(s).
         screen.blit(menubutton, menubutt_rect)
@@ -284,7 +300,7 @@ def game(): #reworked enough to be called my own again.
                         cards_drawn += 1
                         card_active = False
 
-                        if cards_drawn % 3 == 0:
+                        if cards_drawn % 3 == 0:  #this exists to deal some kind of damage to the player, note that I need to implement a real combat system or turn it into a feature via monster cards.
                             player_health -= 10
 
 
@@ -301,7 +317,7 @@ def game(): #reworked enough to be called my own again.
                             spell_active = 'fireball_shot'
             
                         
-            if strike_button_rect.collidepoint((mx, my)) and click:
+            if strike_button_rect.collidepoint((mx, my)) and click: #gives the players the opportunity to physically attack and restore health. helps balance mana.
                 enemy_health -= 10
                 player_health += 1
                 
@@ -343,13 +359,15 @@ def game(): #reworked enough to be called my own again.
                
                 
             if enemy_health <= 0:
+                screen.blit(playerlevel_text, playerlevel_text_rect)
+                current_state = "Existing"
                 earthslime_level += 1
                 enemy_health = 100 
                 player_level += 1
                 print("the earthslime is Level", earthslime_level)
                 print("the player is Level", player_level)
                 print(enemy_health)
-                player_health -= 25
+                player_health -= 15
 
             if player_health >= 150:
                 player_health = 150
@@ -392,6 +410,10 @@ def game(): #reworked enough to be called my own again.
             health_text = font.render("Hp: " + str(player_health), False, (65,67,69))
             health_text_rect = health_text.get_rect(topleft = (100,173))
 
+            #I can make player level appear in the same way
+            playerlevel_text = font.render("Level: " +str(player_level), False, (10,10,10))
+            playerlevel_text_rect = playerlevel_text.get_rect(center = (100,50))
+
             
             # Here I am drawing instead of blitting my health bars
             pygame.draw.rect(screen, (200, 15, 15), player_health_base)
@@ -402,6 +424,7 @@ def game(): #reworked enough to be called my own again.
 
             #here I am going to draw/render/blit my health text to the rects.
             screen.blit(health_text, health_text_rect)
+            #screen.blit(playerlevel_text, playerlevel_text_rect)
 
 
             #down here is where I can handle all my active/in game events like levels and displaying player/enemy damage
@@ -418,18 +441,92 @@ def game(): #reworked enough to be called my own again.
 
 
 def enter_wilds():
-    screen.fill("darkgray")
+
+    #player_x =50
+    #player_y = 50
+    vel = 5 #vel, short for velocity, could be called 'movement' but represents the rate at which it will move.
+    gravity = 0.1
+    player_gravity = 0.0
+    jump_height = 5
+    jumping = False
+    jump_count = 10
+    can_jump = True
+    jump_speed = 0.2
+    enemy_gravity = 0
+    ground_depth = 5
+    ground_tile_height = 32
+
+
+    #screen.fill("darkgray")
+    #here I want to load new images for my player, enemies, and environment
+    players_image = pygame.image.load('graphics/player.png')
+    groundtile = pygame.image.load('graphics/ingamegraphics/grassblock.png')
+    earthslime_enemy = pygame.image.load('graphics/ingamegraphics/earthslime.png')
+
+    #here is where I handle the wilds in-game rects for player, enemies, and environment.
+    players_rect = players_image.get_rect(center = (250, 350))
+    groundtile_rect = pygame.Rect(0, screen_height - 160, screen_width, 32)
+
+    enemy_list = []
+
+    for _ in range(1):
+        enemy_rect = earthslime_enemy.get_rect(center=(random.randint(0, screen_width), -32))  # Random initial position above the screen
+        enemy_list.append(enemy_rect)
+
     wildsbackground = pygame.image.load('graphics/wildsbg.png') #example to follow like the main menu splash.
+
+
+    #screen.blit(wildsbackground, (0,0))
+    #screen.blit(menubutton,menubutt_rect)
     
-        
-    screen.blit(menubutton, menubutt_rect)
-    screen.blit(wildsbackground, (0,0))
-    screen.blit(menubutton,menubutt_rect)
-    screen.blit(player_image, (50,450))
+    #screen.blit(player_image, player_rect)
+    
+    
     running = True
     
     while running:
-        
+
+        screen.fill('darkgrey')
+        screen.blit(menubutton,menubutt_rect)
+
+        for y in range(screen_height - ground_tile_height * ground_depth, screen_height, ground_tile_height):
+            for x in range(0, screen_width, ground_tile_height):
+                screen.blit(groundtile, (x, y))
+
+        player_gravity += gravity
+
+        players_rect.y += player_gravity
+
+        for enemy_rect in enemy_list:
+            #enemy_gravity = 0.0
+            enemy_gravity += gravity
+            enemy_rect.y += enemy_gravity
+
+            if enemy_rect.colliderect(groundtile_rect):
+                enemy_rect.y = groundtile_rect.y - enemy_rect.height
+                enemy_gravity = 0
+            dx = players_rect.x - enemy_rect.x
+            dy = players_rect.y - enemy_rect.y
+            distance = math.sqrt(dx ** 2 + dy ** 2)
+
+            # Adjust slime's x-coordinate towards the player (a mighty thanks to the chatgpt no shame in the game)
+            if dx != 0:
+                enemy_rect.x += vel * (dx / distance)
+
+
+        #adding in a collision dectection to stop when the player touches the ground
+        if players_rect.colliderect(groundtile_rect):
+            players_rect.y = groundtile_rect.y - players_rect.height
+            player_gravity = 0
+            can_jump = True
+
+        if jumping:
+            if jump_count >= -10:
+                players_rect.y -= (jump_count * abs(jump_count)) * jump_speed
+                jump_count -= 1
+            else:
+                jumping = False
+                jump_count = 10
             
         mx, my = pygame.mouse.get_pos()
         click = False
@@ -438,33 +535,60 @@ def enter_wilds():
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
-                    
-            if event.type == KEYDOWN:
-                    
-                if event.key == K_ESCAPE:
-                        running = False
 
-                #movement will have to come when my mind has refreshed or whenver I get the time again. Honestly I am surprised I did this much this evening.
+            #movement will have to come when my mind has refreshed or whenver I get the time again. Honestly I am surprised I did this much this evening.
                         
             if event.type == MOUSEBUTTONDOWN:
                     
                 if event.button == 1:
                     click = True
-                
+
+    
 
             # No check for current_state, so occurs regardless of state
             if menubutt_rect.collidepoint((mx, my)):
                 #print("Hey there is collision")
                 if click:
                     return  # Goes back to main menu, as it is the one that calls game
-                
 
+              
+        keys = pygame.key.get_pressed()
+
+        if keys[pygame.K_LEFT]: #yay movement, this was more challening than initially though
+            print('left was pressed')
+            players_rect.x -= vel + 1
+
+        if keys[pygame.K_RIGHT]:
+            players_rect.x += vel
+
+        if keys[pygame.K_UP] and can_jump:
+                jumping = True
+                player_gravity = 0
+                can_jump = False
+            
+                #players_rect.y -= jump_height
+
+        if keys[pygame.K_DOWN]:
+            players_rect.y += vel
+        
+        
+
+        #screen.fill('darkgray')
+        screen.blit(menubutton, menubutt_rect)
+        screen.blit(players_image,players_rect)
+        screen.blit(earthslime_enemy, enemy_rect)
         pygame.display.update()
+        clock.tick(60)
+
+    pygame.quit()
 
 
-
-
-
+"""05/20/23 12:56 AM I did it!, I can now move my character around and off the screen,
+ from here I need to spend moretime adding im more controls, preferably towards WASD and 
+ arrow keys. once I add in gravity and the world's most basic enemy (our slime), 
+ I might spice it up with gamepad controls too.
+"""
+#2:24am after messing around some there is so much to do.
 
 def spells_library():
     
