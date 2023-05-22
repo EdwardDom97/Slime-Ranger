@@ -442,76 +442,105 @@ def game(): #reworked enough to be called my own again.
 
 def enter_wilds():
 
-    #player_x =50
-    #player_y = 50
-    vel = 5 #vel, short for velocity, could be called 'movement' but represents the rate at which it will move.
-    gravity = 0.1
+    vel = 6 #vel, short for velocity, could be called 'movement' but represents the rate at which it will move.
+    gravity = 0.2
     player_gravity = 0.0
-    jump_height = 5
     jumping = False
-    jump_count = 10
+    jump_count = 12
     can_jump = True
-    jump_speed = 0.2
-    enemy_gravity = 0
-    ground_depth = 5
+    jump_speed = 0.15
+    enemy_gravity = 4
+    ground_depth = 3
     ground_tile_height = 32
-
-
-    #screen.fill("darkgray")
-    #here I want to load new images for my player, enemies, and environment
-    players_image = pygame.image.load('graphics/player.png')
-    groundtile = pygame.image.load('graphics/ingamegraphics/grassblock.png')
-    earthslime_enemy = pygame.image.load('graphics/ingamegraphics/earthslime.png')
-
-    #here is where I handle the wilds in-game rects for player, enemies, and environment.
-    players_rect = players_image.get_rect(center = (250, 350))
-    groundtile_rect = pygame.Rect(0, screen_height - 160, screen_width, 32)
-
+    magic_attacks = []
     enemy_list = []
-
-    for _ in range(1):
-        enemy_rect = earthslime_enemy.get_rect(center=(random.randint(0, screen_width), -32))  # Random initial position above the screen
-        enemy_list.append(enemy_rect)
-
-    wildsbackground = pygame.image.load('graphics/wildsbg.png') #example to follow like the main menu splash.
-
-
-    #screen.blit(wildsbackground, (0,0))
-    #screen.blit(menubutton,menubutt_rect)
+    player_direction = 'right'
+    spell_cast_timer = 0
+    spell_speed = 10
+    show_inventory = False
+    #here I want all of my enemy variables
+    max_slimes = 10
+    current_slimes = 0
+    spawn_timer = 0
+    spawn_interval = 2000
     
-    #screen.blit(player_image, player_rect)
-    
-    
+    #Here I want to load new images for my Environment, Player, enemies, and other entities, and then User Interface.
+    #Environment
+    groundtile = pygame.image.load('graphics/ingamegraphics/grassblock.png')
+    undergroundtile = pygame.image.load('graphics/ingamegraphics/dirtblock.png')
+
+    #Player, enemies, and others.
+    players_image = pygame.image.load('graphics/player.png')
+    earthslime_enemy = pygame.image.load('graphics/ingamegraphics/earthslime.png')
+    magic_attack = pygame.image.load('graphics/ingamegraphics/manablast.png')
+    sign_village = pygame.image.load('graphics/ingamegraphics/townsign.png')
+
+    #the Inventory the player can see when they press 'i'
+    player_inventory_image = pygame.image.load('graphics/ingamegraphics/playerinventory.png')
+    inventoryexit_button = pygame.image.load('graphics/ingamegraphics/inventory_exit_button.png')
+
+
+    #Here is where I handle the wilds in-game rects for player, enemies, and environment.
+    #Environment rects, Player Rect.
+    groundtile_rect = pygame.Rect(0, screen_height - 96, screen_width, 32)
+    players_rect = players_image.get_rect(center = (250, 350))
+    sign_rect = sign_village.get_rect(left =0, bottom = groundtile_rect.top)
+
+    #Player inventory Rects
+    player_inventory_rect = pygame.Rect(200,200, player_inventory_image.get_width(), player_inventory_image.get_height())
+    inventoryexit_button_rect = pygame.Rect(player_inventory_rect.right - 32, player_inventory_rect.top, 30,30)
+
+    #enemy rect for slime but can and will be updated later.
+    enemy_rect = earthslime_enemy.get_rect()
+    enemy_rect.x = random.randint(0, screen_width - enemy_rect.width)
+    enemy_list.append(enemy_rect)
+
+
     running = True
     
     while running:
 
+        elapsed_time = clock.tick(60)
+        spell_cast_timer -= elapsed_time
+        spawn_timer -= elapsed_time
+    
         screen.fill('darkgrey')
         screen.blit(menubutton,menubutt_rect)
+        screen.blit(sign_village, sign_rect)
 
         for y in range(screen_height - ground_tile_height * ground_depth, screen_height, ground_tile_height):
             for x in range(0, screen_width, ground_tile_height):
-                screen.blit(groundtile, (x, y))
+                if y == screen_height - ground_tile_height * ground_depth:
+                    screen.blit(groundtile, (x,y))
+                else:  
+                    screen.blit(undergroundtile, (x, y))
 
         player_gravity += gravity
 
         players_rect.y += player_gravity
 
         for enemy_rect in enemy_list:
-            #enemy_gravity = 0.0
+            enemy_gravity = 4
             enemy_gravity += gravity
             enemy_rect.y += enemy_gravity
-
+            screen.blit(earthslime_enemy, enemy_rect)
+            #if enemy_rect.y > screen_height:
+                #if the slime somehow goes off screen it will be removed
+                #enemy_list.remove(enemy_rect)
+                #current_slimes -= 1
+                #continue
+          
             if enemy_rect.colliderect(groundtile_rect):
-                enemy_rect.y = groundtile_rect.y - enemy_rect.height
+                enemy_rect.y = groundtile_rect.y - enemy_rect.height  
                 enemy_gravity = 0
-            dx = players_rect.x - enemy_rect.x
-            dy = players_rect.y - enemy_rect.y
-            distance = math.sqrt(dx ** 2 + dy ** 2)
+                dx = players_rect.x - enemy_rect.x
+                dy = players_rect.y - enemy_rect.y
+                distance = math.sqrt(dx ** 2 + dy ** 2)
+                
 
             # Adjust slime's x-coordinate towards the player (a mighty thanks to the chatgpt no shame in the game)
-            if dx != 0:
-                enemy_rect.x += vel * (dx / distance)
+                if dx >= 50 or dx <= -50:
+                    enemy_rect.x += vel * (dx / distance)
 
 
         #adding in a collision dectection to stop when the player touches the ground
@@ -520,13 +549,14 @@ def enter_wilds():
             player_gravity = 0
             can_jump = True
 
-        if jumping:
-            if jump_count >= -10:
+        
+        if jumping: #this is for the player might try to do something similar for my slime enemies.
+            if jump_count >= -12:
                 players_rect.y -= (jump_count * abs(jump_count)) * jump_speed
-                jump_count -= 1
+                jump_count -= .8
             else:
                 jumping = False
-                jump_count = 10
+                jump_count = 12
             
         mx, my = pygame.mouse.get_pos()
         click = False
@@ -535,17 +565,18 @@ def enter_wilds():
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
-
-            #movement will have to come when my mind has refreshed or whenver I get the time again. Honestly I am surprised I did this much this evening.
                         
             if event.type == MOUSEBUTTONDOWN:
                     
                 if event.button == 1:
                     click = True
 
-    
+                if event.button == 1 and show_inventory:
+                    if inventoryexit_button_rect.collidepoint(event.pos):
+                        show_inventory = False
 
-            # No check for current_state, so occurs regardless of state
+    
+            # No check for current_state, so occurs regardless of state, happens at anytime inside the for event in pygame.event.get():
             if menubutt_rect.collidepoint((mx, my)):
                 #print("Hey there is collision")
                 if click:
@@ -554,34 +585,166 @@ def enter_wilds():
               
         keys = pygame.key.get_pressed()
 
-        if keys[pygame.K_LEFT]: #yay movement, this was more challening than initially though
-            print('left was pressed')
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]: #yay movement, this was more challening than initially though
+            #print('left was pressed')
             players_rect.x -= vel + 1
 
-        if keys[pygame.K_RIGHT]:
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             players_rect.x += vel
+        
+        if keys[pygame.K_i]:
+            show_inventory = True
+    
+        
+        if show_inventory:
+            screen.blit(player_inventory_image, player_inventory_rect)
+            screen.blit(inventoryexit_button, inventoryexit_button_rect)
 
-        if keys[pygame.K_UP] and can_jump:
-                jumping = True
-                player_gravity = 0
-                can_jump = False
+        if keys[pygame.K_UP] or keys[pygame.K_w] and can_jump: #jump is not that bad right now but there is a slight bug. Player can repeatedly jump until they are floating.
+            jumping = True
+            player_gravity = 0
+            can_jump = False
             
-                #players_rect.y -= jump_height
+        if spell_cast_timer <= 0:
+            if keys[pygame.K_SPACE]: #I had a hard time figuring out how to shoot a projectile. 
+                # Fire magic attack
+                magic_attack_rect = magic_attack.get_rect()
+                magic_attack_rect.center = players_rect.center
+                # Get the direction from the player to the mouse position
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                dx = mouse_x - magic_attack_rect.centerx
+                dy = mouse_y - magic_attack_rect.centery
 
-        if keys[pygame.K_DOWN]:
-            players_rect.y += vel
-        
-        
+                # Normalize the direction vector #thanks to chat gpt honestly, I dont know the logic behind this
+                magnitude = math.sqrt(dx ** 2 + dy ** 2)
+                direction = (dx / magnitude, dy / magnitude)
 
-        #screen.fill('darkgray')
-        screen.blit(menubutton, menubutt_rect)
+                # Set the speed of the magic attack
+                spell_speed = 10
+
+                # Adjust the position and speed based on the direction
+                magic_attack_rect.x += direction[0] * spell_speed
+                magic_attack_rect.y += direction[1] * spell_speed
+
+                magic_attacks.append((magic_attack_rect, direction))
+
+                spell_cast_timer = 500
+
+        for magic_attack_rect, direction in magic_attacks:
+            magic_attack_rect.x += direction[0] * spell_speed
+            magic_attack_rect.y += direction[1] * spell_speed
+
+            for enemy_rect in enemy_list:
+                if magic_attack_rect.colliderect(enemy_rect):
+                    #if slime collides with manablast it will be 'killed' or removed.
+                    enemy_list.remove(enemy_rect)
+                    current_slimes -= 1
+                    # Reset the enemy's position to the top of the screen
+                    enemy_rect.x = random.randint(0, screen_width - enemy_rect.width)
+                    enemy_rect.y = -enemy_rect.height
+
+                    # Remove the magic attack
+                    magic_attacks.remove((magic_attack_rect, direction))
+                    break
+
+            screen.blit(magic_attack, magic_attack_rect)
+
+            if spawn_timer <= 0 and current_slimes < max_slimes:
+                # Spawn a slime enemy
+                enemy_rect = earthslime_enemy.get_rect()
+                enemy_rect.x = random.randint(0, screen_width - enemy_rect.width)
+                enemy_rect.y = -enemy_rect.height
+                enemy_list.append(enemy_rect)
+
+                #add a slime per loop up to the max slime which was defined as 10
+                current_slimes += 1
+                # Reset the spawn timer
+                spawn_timer = spawn_interval
+
+        if players_rect.colliderect(sign_rect):
+            player_gravity = 0
+            enter_village()
+
         screen.blit(players_image,players_rect)
-        screen.blit(earthslime_enemy, enemy_rect)
+
+
         pygame.display.update()
         clock.tick(60)
 
     pygame.quit()
 
+def enter_village():
+    vel = 6
+    player_gravity = 0
+    gravity = 0.2
+    ground_tile_height = 32
+    ground_depth = 3
+
+    screen.fill("lightgray")
+
+    groundtile = pygame.image.load('graphics/ingamegraphics/grassblock.png')
+    undergroundtile = pygame.image.load('graphics/ingamegraphics/dirtblock.png')
+    players_image = pygame.image.load('graphics/player.png')
+    thewilds_sign = pygame.image.load('graphics/ingamegraphics/thewildsign.png')
+
+    #groundtile_rect = groundtile.get_rect()
+    groundtile_rect = pygame.Rect(0, screen_height - 96, screen_width, 32)
+    thewildsign_rect = thewilds_sign.get_rect(left = 0, bottom = groundtile_rect.top)
+    
+
+    players_rect = players_image.get_rect(center=(250, 650))
+
+    running = True
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+        player_gravity += gravity
+        players_rect.y += player_gravity
+
+        if players_rect.bottom >= groundtile_rect.top:
+            players_rect.bottom = groundtile_rect.top
+            player_gravity = 0
+
+        screen.fill("lightgray")
+        screen.blit(thewilds_sign, thewildsign_rect)
+
+        for y in range(screen_height - ground_tile_height * ground_depth, screen_height, ground_tile_height):
+            for x in range(0, screen_width, ground_tile_height):
+                if y == screen_height - ground_tile_height * ground_depth:
+                    screen.blit(groundtile, (x, y))
+                else:
+                    screen.blit(undergroundtile, (x, y))
+
+        keys = pygame.key.get_pressed()
+
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]: #yay movement, this was more challening than initially though
+            #print('left was pressed')
+            players_rect.x -= vel + 1
+
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+            players_rect.x += vel
+
+
+        if players_rect.colliderect(thewildsign_rect):
+            player_gravity = 0
+            enter_wilds()
+
+        screen.blit(players_image, players_rect)
+
+        pygame.display.update()
+        clock.tick(60)
+
+
+
+    pygame.quit()
+
+
+
+    #INSERT THE MUTHAFRICKIN CODE FOR THE NEWEST ALMOST UPDATE ENTER VILLAGE!
 
 """05/20/23 12:56 AM I did it!, I can now move my character around and off the screen,
  from here I need to spend moretime adding im more controls, preferably towards WASD and 
@@ -589,6 +752,11 @@ def enter_wilds():
  I might spice it up with gamepad controls too.
 """
 #2:24am after messing around some there is so much to do.
+
+
+
+
+
 
 def spells_library():
     
@@ -628,6 +796,9 @@ def spells_library():
                 
 
         pygame.display.update()
+
+
+
 
 def options():
     screen.fill("lightgray")
