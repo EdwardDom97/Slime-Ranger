@@ -691,10 +691,12 @@ def enter_village():
     undergroundtile = pygame.image.load('graphics/ingamegraphics/dirtblock.png')
     players_image = pygame.image.load('graphics/player.png')
     thewilds_sign = pygame.image.load('graphics/ingamegraphics/thewildsign.png')
+    village_spawn = pygame.image.load('graphics/village/spawncrystal.png')
 
     #groundtile_rect = groundtile.get_rect()
     groundtile_rect = pygame.Rect(0, screen_height - 96, screen_width, 32)
     thewildsign_rect = thewilds_sign.get_rect(left = 0, bottom = groundtile_rect.top)
+    village_spawn_rect = village_spawn.get_rect(left = 600, bottom = groundtile_rect.top)
     
 
     players_rect = players_image.get_rect(center=(250, 650))
@@ -716,6 +718,7 @@ def enter_village():
 
         screen.fill("lightgray")
         screen.blit(thewilds_sign, thewildsign_rect)
+        screen.blit(village_spawn, village_spawn_rect)
 
         for y in range(screen_height - ground_tile_height * ground_depth, screen_height, ground_tile_height):
             for x in range(0, screen_width, ground_tile_height):
