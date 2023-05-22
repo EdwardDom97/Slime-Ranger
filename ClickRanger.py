@@ -26,7 +26,7 @@ clock = pygame.time.Clock()
 
 
 # menuimages
-menuintro = font.render("Click Ranger V 0.04 'The Wilds'", False, (180, 180, 165))
+menuintro = font.render("Click Ranger V 0.05 'ENTER THE VILLAGE!'", False, (180, 180, 165))
 start_button = pygame.image.load('graphics/startbutton.png')
 options_button = pygame.image.load('graphics/optionsbutton.png')
 exit_button = pygame.image.load('graphics/exitbutton.png')
