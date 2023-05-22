@@ -592,6 +592,11 @@ def enter_wilds():
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             players_rect.x += vel
         
+        if keys[pygame.K_ESCAPE]:
+            running = False
+            main_menu()
+
+        
         if keys[pygame.K_i]:
             show_inventory = True
     
@@ -727,6 +732,10 @@ def enter_village():
 
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             players_rect.x += vel
+        
+        if keys[pygame.K_ESCAPE]:
+            running = False
+            main_menu()
 
 
         if players_rect.colliderect(thewildsign_rect):
