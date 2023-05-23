@@ -1,9 +1,12 @@
-#Click Rangers Code rework for better menu, still V 0.01, which is now v 0.02 as of 2/11/23.
-#Making an edit for Click Ranger on 04/23/2023 called "The Wilds" I am adding in another button and game state that will simply allow the player the move around and jump.
-#This is to prepare for an idea I have had in the back of my mind since my last good run with coding
-#changed the start button to Card Duel in main menu 05/18/2023
-#as of 05/22/23 The Card Duel feature will be removed as set aside. Click Ranger will now Turn Into an updated version of my first game release
-#Slime Ranger. Slime Ranger will be a 2d platformer to my designs, whereas Click Ranger will be a Click-Based Card game. 
+#I want to store my Card_Duel code from my initial project Click Ranger and store it here for a later date in time
+#ultimately I will have two seperate games, Slime Ranger which is a 2d platformer, and Click Ranger which is a click-based
+#dungeon game with cards. Both games will have similar elements and will draw inspiration from each other.
+
+
+#THIS IS A NOTE FOR MYSELF THAT I COPIED THE ENTIRE VERSION OF CLICK RANGER 0.0.5 AND PASTED IT HERE, I WILL DELETE THIS CODE FROM THE OTHER ONE SO MY
+#CARD GAME WILL ONLY EXIST HERE PAST THIS POINT.
+
+
 
 import pygame, sys
 import random
@@ -14,8 +17,6 @@ import math
 from pygame.locals import *
 
 pygame.init()
-
-
 screen_width = 1600
 screen_height = 900
 pygame.display.set_caption('Slime Ranger V 0.05 "ENTER VILLAGE"') #yay we are now 0.01 away from the creation, 1 week in
@@ -28,41 +29,29 @@ clock = pygame.time.Clock()
 #menuloop = pygame.mixer.music.load('gameloop.wav')
 #pygame.mixer.music.play(-1)
 
-# menuimages
-menuintro = font.render("Slime Ranger V 0.05 'ENTER THE VILLAGE!'", False, (180, 180, 165))
 
-#menu buttons
-new_game_button = pygame.image.load('graphics/newgamebutton.png')
+# menuimages
+menuintro = font.render("Click Ranger V 0.05 'ENTER THE VILLAGE!'", False, (180, 180, 165))
+start_button = pygame.image.load('graphics/startbutton.png')
 options_button = pygame.image.load('graphics/optionsbutton.png')
 exit_button = pygame.image.load('graphics/exitbutton.png')
 spell_library_button = pygame.image.load('graphics/librarybutton.png')
 menulogo = pygame.image.load('graphics/menulogo.png')
-load_game_button = pygame.image.load('graphics/loadgamebutton.png')
-menubutton = pygame.image.load('graphics/menubutton.png')
+the_wilds_button = pygame.image.load('graphics/thewildsbutton.png')
 
+
+menuintro_rect = menuintro.get_rect(midleft = (50, 125)) #this is not a button it's the 'background' to the text
 
 #menubuttonrects, I want my buttons listed in order as they also appear on my menu in-game.
-ingamemenu = pygame.image.load('graphics/ingamegraphics/ingamemenu.png')
-ingamemenu_rect = ingamemenu.get_rect(midleft = (600,450))
-
-ingamemenu_exit_button = pygame.image.load('graphics/ingamegraphics/inventory_exit_button.png')
-ingamemenu_exit_button_rect = pygame.Rect(ingamemenu_rect.right - 32, ingamemenu_rect.top, 30,30)
-
-ingamemenu_returnmain_button = pygame.image.load('graphics/ingamegraphics/mainmenureturnbutton.png')
-ingamemenu_returnmain_button_rect = ingamemenu_returnmain_button.get_rect()
-ingamemenu_returnmain_button_rect.center = ingamemenu_rect.center
-
 
 #05/16/2023 I want to play with my menu button locations,perhaps try setting the x value as half of the width of the screen so it's centered. 
 
-#05/22/23 working on updates my new menu buttons. 
-new_game_button_rect = new_game_button.get_rect(center = (screen_width/2,200)) #starts a card combat game. idea to rename as I go.
-load_game_button_rect = load_game_button.get_rect(center = (screen_width/2,275))
+start_button_rect = start_button.get_rect(center = (screen_width/2,200)) #starts a card combat game. idea to rename as I go.
+the_wilds_rect = the_wilds_button.get_rect(center = (screen_width/2,275))
 options_rect = options_button.get_rect(center = (screen_width/2,350))
 spelllib_rect = spell_library_button.get_rect(center = (screen_width/2,425))
 exit_rect = exit_button.get_rect(center = (screen_width/2,500))
 menulogo_rect = menulogo.get_rect(topleft = (325, 600))
-menubutton_rect = menubutton.get_rect(topleft = (50,600))
 
 #Spells Menu images
 bookofspells = pygame.image.load('graphics/bookospells.png')
@@ -70,9 +59,76 @@ bookofspells = pygame.image.load('graphics/bookospells.png')
 #Spells Menu Rects (undecided if needed)
 bookofspells_rect = bookofspells.get_rect(topleft = (1,1))
 
+#in-game images (player, slime, ground, future background, ect.)
+player_image = pygame.image.load('graphics/player.png')
+earthslime = pygame.image.load('graphics/earthslime.png')
+ground = pygame.image.load('graphics/grass.png')
+player_level_icon = pygame.image.load('graphics/playerlevelicon.png')
+enemy_level_icon = pygame.image.load('graphics/enemylevelicon.png')
+help_button_icon = pygame.image.load('graphics/helpbutton.png')
+#adding in the player level background to experiment with
+playerlevelbackg = pygame.image.load('graphics/playerlevelbg.png')
+
+
+
+#my in-game player and slime rect locations, eventually want to set equal to distance of screen for resizing properly
+ground_rect = ground.get_rect(midleft = (100, 265))
+player_rect = player_image.get_rect(midbottom = (110, 250))
+playerlevelicon_rect = player_level_icon.get_rect(topleft = (110, 270))
+earthslime_rect = earthslime.get_rect(midbottom = (450, 250))
+enemylevelicon_rect = enemy_level_icon.get_rect(topleft = (435, 270))
+help_button_rect = help_button_icon.get_rect(topleft = (325,150))
+playerlevelbackg_rect = playerlevelbackg.get_rect(topleft = (100,50))
+
+
+#in-game buttons
+menubutton = pygame.image.load('graphics/menubutton.png')
+drawspellbutton = pygame.image.load('graphics/drawspellbutton.png')
+#attack_icon = pygame.image.load('graphics/attack_button.png')
+castaspell_button = pygame.image.load('graphics/castspellbutton.png')
+strike_button = pygame.image.load('graphics/strikebutton.png')
+end_turn_button = pygame.image.load('graphics/endturnbutton.png')
+igattack_icon = pygame.image.load('graphics/ingamegraphics/igattack.png')
+player_info = pygame.image.load('graphics/ingamegraphics/ranger_card.png')
+
+
+#in-game button rects
+endturnbutt_rect = end_turn_button.get_rect(midleft = (250, 150))
+spellbutt_rect = drawspellbutton.get_rect(midleft = (250, 392))
+castaspell_rect = castaspell_button.get_rect(midleft = (250, 445))
+strike_button_rect = strike_button.get_rect(midleft = (250, 497))
+menubutt_rect = menubutton.get_rect(midleft = (250, 550))
+#attack_icon_rect = attack_icon.get_rect(midleft = (750, 432))
+player_info_rect = player_info.get_rect(center=(1000,425))
+
+
+
+#in-game cards that I could also set as a library.
+manashot = pygame.image.load('graphics/cards/manashot.png')
+topcard = pygame.image.load('graphics/cards/cardback.png')
+cardpanimg = pygame.image.load('graphics/cards/cardpanel.png')
+healthdrop = pygame.image.load('graphics/cards/healthdrop.png')
+sipomana = pygame.image.load('graphics/cards/sipomana.png')
+fireball_shot = pygame.image.load('graphics/cards/fireball.png')
+newcardpanel = pygame.image.load('graphics/cards/newercardpanel.png')
+
+#in-game card rects
+#keep location same for all cards .get_rect(topleft = (505, 370))
+manashot_rect = manashot.get_rect(topleft = (485, 370))  
+healthdrop_rect = healthdrop.get_rect(topleft = (485, 370))
+sipomana_rect = sipomana.get_rect(topleft = (485, 370))
+topcard_rect = topcard.get_rect(topleft = (50, 375))
+casted_spell_rect = topcard.get_rect(topleft = (485, 370))
+fireball_shot_rect = fireball_shot.get_rect(topleft = (485, 370))
+cardpanimg_rect = cardpanimg.get_rect(midleft = (0, 445))
+newcardpanel_rect = newcardpanel.get_rect(midleft=(0,screen_height/2))
+
+#going to try to create a list here and use the random code. will do two to start.
+
+spell_library = [(manashot, manashot_rect), (healthdrop, healthdrop_rect),(fireball_shot,fireball_shot_rect)]
+#random_spell = random.choice(spell_library)
 
 click = False
-player_score = 0
 
 
 def main_menu(): 
@@ -84,8 +140,9 @@ def main_menu():
         
 
         #screen.fill('grey')
-        screen.blit(load_game_button, load_game_button_rect)
-        screen.blit(new_game_button, new_game_button_rect)
+        screen.blit(menuintro, menuintro_rect)
+        screen.blit(the_wilds_button, the_wilds_rect)
+        screen.blit(start_button, start_button_rect)
         screen.blit(menulogo, menulogo_rect)
         screen.blit(options_button, options_rect)
         screen.blit(exit_button, exit_rect)
@@ -100,20 +157,20 @@ def main_menu():
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
-            #if event.type == KEYDOWN:
-                #if event.key == K_ESCAPE:
-                    #pygame.quit()
-                    #sys.exit()
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
             if event.type == MOUSEBUTTONDOWN:
                 if event.button == 1:
                     click = True
             #if event.type == VIDEORESIZE:
                 #screen = pygame.display.set_mode((800, 600), pygame.RESIZABLE)
 
-            if new_game_button_rect.collidepoint((mx, my)):
-                
+            if start_button_rect.collidepoint((mx, my)):
+                #print('Hey james there is collision')
                 if click:
-                    character_creation_screen()
+                    game()
 
             if options_rect.collidepoint((mx, my)):
                 if click:
@@ -130,121 +187,266 @@ def main_menu():
                     sys.exit()
 
 
-            if load_game_button_rect.collidepoint((mx,my)):
+            if the_wilds_rect.collidepoint((mx,my)):
                 if click:
-                    enter_village()
+                    enter_wilds()
 
                     
          
         pygame.display.update()
-        clock.tick(60)
+        clock.tick(0)
 
 
-def character_creation_screen():
+#
 
-    mx,my = pygame.mouse.get_pos()
-    character = {}  # Dictionary to store character attributes
-    click = False
-    button_pressed = False
-
-    newplayerscreen = pygame.image.load('graphics/createplayerwindow.png')
-    newplayerscreen_rect = newplayerscreen.get_rect(midleft = (400,400))
-    menubutton = pygame.image.load('graphics/menubutton.png')
-    startgamebutton = pygame.image.load('graphics/startbutton.png')
-    chooseplayerbutton = pygame.image.load('graphics/chooseplayer.png')
-
-    menubutton_rect = menubutton.get_rect(bottomleft=(newplayerscreen_rect.left, newplayerscreen_rect.bottom))
-    chooseplayerbutton_rect = chooseplayerbutton.get_rect(bottom=(newplayerscreen_rect.bottom), centerx=newplayerscreen_rect.centerx)
-    startgamebutton_rect = startgamebutton.get_rect(bottomright=(newplayerscreen_rect.right, newplayerscreen_rect.bottom))
-
-    player_options = ['graphics/ingamegraphics/players/playeroption01.png', 'graphics/ingamegraphics/players/playeroption02.png', 'graphics/ingamegraphics/players/playeroption03.png']
-
-    clock.tick(1)
+def game(): #reworked enough to be called my own again. 
+    current_state = "Existing"
     
-    while True:
-        # ... character creation screen logic ...
-        screen.fill('darkgray')
+    
 
-        mx,my = pygame.mouse.get_pos()
+ 
         
 
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
+    if current_state == "Existing": #anything I set before existing will become updated in existing.
 
-            if event.type == MOUSEBUTTONDOWN:
-                if event.button == 1 and not button_pressed:
-                    click = True
-                    button_pressed = True
-            # ... handle user input and interactions ...
-            if event.type == MOUSEBUTTONUP:
-                if event.button == 1:
-                    button_pressed = False
+        #I need to reorganize some of my variables but will do later
+
+        player_health = 150
+        enemy_health = 100 
+        spell_active = 'None'
+        card_active = False
+        casts = 0
+        game_round = 0 #ignoring might remove
+        cards_drawn = 0
+        running = True       
+        player_level = 0
+        earthslime_level = 0
+
+        #this is where I will make my enemy attack variable
+        enemy_attacking = True
+        enemy_attack_timer = 3
+        enemy_charge_attack = 0
+
+        # Always draw the following
+        screen.fill("lightgray")
+
+        #seeing if I can load the player's level background here, update: it works now I need to get both text and image together.
+        screen.blit(newcardpanel,newcardpanel_rect)
+
+        screen.blit(playerlevelbackg,playerlevelbackg_rect)
+        #screen.blit(cardpanimg, cardpanimg_rect)
+        
+        screen.blit(player_image, player_rect)
+        #screen.blit(player_level_icon, playerlevelicon_rect)
+        
+        screen.blit(earthslime, earthslime_rect)
+        #screen.blit(enemy_level_icon, enemylevelicon_rect)
+        screen.blit(help_button_icon,help_button_rect)
+
+        
+        #screen.blit(ground, ground_rect)
+
+        # want to add my 'draw' button 'menu' button and card(s).
+        screen.blit(menubutton, menubutt_rect)
+        screen.blit(drawspellbutton, spellbutt_rect)
+        screen.blit(topcard, topcard_rect)
+            
+        #screen.blit(attack_icon, attack_icon_rect)
+        screen.blit(strike_button, strike_button_rect)
+        screen.blit(castaspell_button, castaspell_rect)
+        #screen.blit(end_turn_button, endturnbutt_rect)
+
+        #add in a keyevent for I, representing inventory, that when pressed shows the rangers card.
+        
+        while running:
+            #earthslime_health = 100 + int(earthslime_level * 2)
+            mx, my = pygame.mouse.get_pos()
+            click = False
+            enemy_attacking = True
+            
+
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+                    
+                if event.type == KEYDOWN:
+                    
+                    if event.key == K_ESCAPE:
+                        running = False
+
+                    if event.key == pygame.K_i:
+                        screen.blit(player_info,player_info_rect)
+                        
+                if event.type == MOUSEBUTTONDOWN:
+                    
+                    if event.button == 1:
+                        click = True
                 
-        if click and startgamebutton_rect.collidepoint((mx, my)):
-            #print('there was a click here but nothing else')
-            enter_village()
 
-        
-        # ... update UI and render the character creation screen ...
-        screen.blit(newplayerscreen, newplayerscreen_rect)
-        screen.blit(menubutton, menubutton_rect)
-        screen.blit(chooseplayerbutton, chooseplayerbutton_rect)
-        screen.blit(startgamebutton, startgamebutton_rect)
-
-        if button_pressed and chooseplayerbutton_rect.collidepoint(mx, my):
-            player_image = pygame.image.load(random.choice(player_options))
-            player_rect = player_image.get_rect(topright=(newplayerscreen_rect.right, newplayerscreen_rect.top))
-            screen.blit(player_image, player_rect)
-
-
-
-        pygame.display.update()
-        
-
-        click = False
-
-    return character
-
-
-#This serves to create an in-game menu function outside of the wild and village loops so the main menu can be pressed whenever.
-def show_ingame_menu():
-    #I set the value to false so it only appears when the player pressed the right key, in this case being escape.
-    show_ingamemenu = False
-
-    while True:
-        #here I am going to add the code that allows the player to open the in game menu
-        for event in pygame.event.get():
+            # No check for current_state, so occurs regardless of state
+            if menubutt_rect.collidepoint((mx, my)):
+                #print("Hey there is collision")
+                if click:
+                    return  # Goes back to main menu, as it is the one that calls game
+                
+            # Only occurs in blank state
             
-            if event.type == KEYDOWN:
-                if event.key == K_ESCAPE:
-                    show_ingamemenu = True
+                
+            if spellbutt_rect.collidepoint((mx, my)):
+                if click:
+                    if card_active != True:
+                        random_spell = random.choice(spell_library)
+                        print('there is a card on display')                    
+                        print('you have drawn', cards_drawn)
+                        screen.blit(random_spell[0],random_spell[1])
+                        
+                        #screen.blit(manashot,manashot_rect)#change from spell button to end turn button stat
+                        cards_drawn += 1
+                        card_active = False
 
-            if event.button == 1 and show_ingamemenu:
-                if ingamemenu_exit_button_rect.collidepoint(event.pos):
-                    show_ingamemenu = False
+                        if cards_drawn % 3 == 0:  #this exists to deal some kind of damage to the player, note that I need to implement a real combat system or turn it into a feature via monster cards.
+                            player_health -= 10
 
-                if show_ingame_menu and ingamemenu_returnmain_button_rect.collidepoint(event.pos):
-                    main_menu()
+
+                        if random_spell == (manashot, manashot_rect):
+                            print('manashot was drawn')
+                            spell_active = 'manashot'
+                    
+                        if random_spell == (healthdrop, healthdrop_rect):
+                            print('healthdrop was drawn')
+                            spell_active = 'healthdrop'
+
+                        if random_spell == (fireball_shot, fireball_shot_rect):
+                            print('fireball shot was drawn')
+                            spell_active = 'fireball_shot'
+            
+                        
+            if strike_button_rect.collidepoint((mx, my)) and click: #gives the players the opportunity to physically attack and restore health. helps balance mana.
+                enemy_health -= 10
+                player_health += 1
+                
+            if castaspell_rect.collidepoint((mx, my)):
+                if click:
+                    if card_active != True:
+                        if spell_active == 'manashot':
+                            enemy_health -= 10
+                            player_health += 2
+                            screen.blit(topcard, casted_spell_rect)
+                            casts += 1                   
+                            print('your casts are',  casts)
+                            spell_active = 'None'
+                            
+                        if spell_active == 'healthdrop':
+                            player_health += 10
+                            screen.blit(topcard, casted_spell_rect)
+                            casts += 1                   
+                            print('your casts are',  casts)
+                            spell_active = 'None'
+                            
+                        if spell_active == 'fireball_shot':
+                            enemy_health -= 15
+                            player_health += 2
+                            screen.blit(topcard, casted_spell_rect)
+                            casts += 1                   
+                            print('your casts are',  casts)
+                            spell_active = 'None'
+                        
+                        card_active = False
+                        #player_health -= 10
+                        #enemy_turn()
+                        #I want to do something here to signify turn
+                        #current_state = "player_turn"            
+          
+
+            if player_health <= 0:
+                return
+               
+                
+            if enemy_health <= 0:
+                screen.blit(playerlevel_text, playerlevel_text_rect)
+                current_state = "Existing"
+                earthslime_level += 1
+                enemy_health = 100 
+                player_level += 1
+                print("the earthslime is Level", earthslime_level)
+                print("the player is Level", player_level)
+                print(enemy_health)
+                player_health -= 15
+
+            if player_health >= 150:
+                player_health = 150
+            
             
 
+            #if current_state == "Enemy Attacking":
+
+
+                #current_state = "passive"
+
+            #I am going to define player health and enemy slime health here to use pygame rects as hp bars
+
+
+            #Here is where I am going to test/put my if statement for enemy attacks
+            
+            #if enemy_attacking:
+            #    enemy_charge_attack += 1
+            #    pygame.time.delay(200)
+
+            #    if enemy_charge_attack == enemy_attack_timer:
+            #        player_health -= 2
+            #       enemy_charge_attack = 0
+
+                 
+                
+                    
+            
         
-        if show_ingamemenu:
-            screen.blit(ingamemenu,ingamemenu_rect)
-            screen.blit(ingamemenu_exit_button, ingamemenu_exit_button_rect)
-            screen.blit(ingamemenu_returnmain_button, ingamemenu_returnmain_button_rect)
 
 
-        pygame.display.update()
-        clock.tick(60)
-    
+            
+            # Here I want to load in my health bars
+            player_health_base = pygame.Rect(100, 175, 150, 27)
+            player_health_active = pygame.Rect(100, 175, player_health, 27)
+            earthslime_health_base = pygame.Rect(435, 175, 100, 27)
+            earthslime_health_active = pygame.Rect(435, 175, enemy_health, 27)
+            
+            # Here I want to load text to add to my health bars
+            health_text = font.render("Hp: " + str(player_health), False, (65,67,69))
+            health_text_rect = health_text.get_rect(topleft = (100,173))
+
+            #I can make player level appear in the same way
+            playerlevel_text = font.render("Level: " +str(player_level), False, (10,10,10))
+            playerlevel_text_rect = playerlevel_text.get_rect(center = (100,50))
+
+            
+            # Here I am drawing instead of blitting my health bars
+            pygame.draw.rect(screen, (200, 15, 15), player_health_base)
+            pygame.draw.rect(screen, (15, 200, 15), player_health_active)
+
+            pygame.draw.rect(screen, (200, 15, 15), earthslime_health_base)
+            pygame.draw.rect(screen, (15, 200, 15), earthslime_health_active)
+
+            #here I am going to draw/render/blit my health text to the rects.
+            screen.blit(health_text, health_text_rect)
+            #screen.blit(playerlevel_text, playerlevel_text_rect)
+
+
+            #down here is where I can handle all my active/in game events like levels and displaying player/enemy damage
+               
+            #currentplayerlevel = font.render(str(player_level), False, (65, 67, 69))
+            #currentpl_rect = currentplayerlevel.get_rect(midleft = (140, 248))
+            #screen.blit(player_level_icon, playerlevelicon_rect)
+            #screen.blit(currentplayerlevel, currentpl_rect)        
+           
+        
+            
+            pygame.display.update()
+            clock.tick(30)
 
 
 def enter_wilds():
 
-    #Here I want all my player variables
-    player_health = 150
     player_score = 0 #also could be referred to as the number of enemies killed. I'm to implement a real inventory and items soon.
     vel = 6 #vel, short for velocity, could be called 'movement' but represents the rate at which it will move.
     gravity = 0.2
@@ -253,26 +455,22 @@ def enter_wilds():
     jump_count = 12
     can_jump = True
     jump_speed = 0.15
-    spell_cast_timer = 0
-    spell_speed = 10
-    magic_attacks = []
-
-    #Here I want my Environment vairables
+    enemy_gravity = 4
     ground_depth = 3
     ground_tile_height = 32
-
-    #Here I want logic variables like inventories, items, interactables, and options.
-    show_inventory = False
-    show_ingamemenu = False
-
-    #here I want all of my enemy variables
+    magic_attacks = []
     enemy_list = []
+    player_direction = 'right'
+    spell_cast_timer = 0
+    spell_speed = 10
+    show_inventory = False
+    #here I want all of my enemy variables
     max_slimes = 10
     current_slimes = 0
-    enemy_gravity = 4
     spawn_timer = 0
     spawn_interval = 500
-
+    
+    
     
     #Here I want to load new images for my Environment, Player, enemies, and other entities, and then User Interface.
     #Environment
@@ -288,7 +486,7 @@ def enter_wilds():
     #the Inventory the player can see when they press 'i'
     player_inventory_image = pygame.image.load('graphics/ingamegraphics/playerinventory.png')
     inventoryexit_button = pygame.image.load('graphics/ingamegraphics/inventory_exit_button.png')
-  
+
 
     #Here is where I handle the wilds in-game rects for player, enemies, and environment.
     #Environment rects, Player Rect.
@@ -296,11 +494,9 @@ def enter_wilds():
     players_rect = players_image.get_rect(center = (250, 350))
     sign_rect = sign_village.get_rect(left =0, bottom = groundtile_rect.top)
 
-
     #Player inventory Rects
     player_inventory_rect = pygame.Rect(200,200, player_inventory_image.get_width(), player_inventory_image.get_height())
     inventoryexit_button_rect = pygame.Rect(player_inventory_rect.right - 32, player_inventory_rect.top, 30,30)
-
 
     #enemy rect for slime but can and will be updated later.
     enemy_rect = earthslime_enemy.get_rect()
@@ -313,14 +509,12 @@ def enter_wilds():
     while running:
 
         elapsed_time = clock.tick(60)
-
-        player_gravity += gravity
-        players_rect.y += player_gravity
-
         spell_cast_timer -= elapsed_time
+        
         spawn_timer += elapsed_time
     
         screen.fill('darkgrey')
+        screen.blit(menubutton,menubutt_rect)
         screen.blit(sign_village, sign_rect)
     
 
@@ -331,7 +525,9 @@ def enter_wilds():
                 else:  
                     screen.blit(undergroundtile, (x, y))
 
+        player_gravity += gravity
 
+        players_rect.y += player_gravity
 
         for enemy_rect in enemy_list:
             enemy_gravity = 4
@@ -357,15 +553,11 @@ def enter_wilds():
                     enemy_rect.x += vel * (dx / distance)
 
 
-            if enemy_rect.colliderect(players_rect):
-                player_health -= 1
-
         #adding in a collision dectection to stop when the player touches the ground
         if players_rect.colliderect(groundtile_rect):
             players_rect.y = groundtile_rect.y - players_rect.height
             player_gravity = 0
             can_jump = True
-
 
         
         if jumping: #this is for the player might try to do something similar for my slime enemies.
@@ -393,17 +585,13 @@ def enter_wilds():
                     if inventoryexit_button_rect.collidepoint(event.pos):
                         show_inventory = False
 
-                if event.button == 1 and show_ingamemenu:
-                    if ingamemenu_exit_button_rect.collidepoint(event.pos):
-                        show_ingamemenu = False
-                    if ingamemenu_returnmain_button_rect.collidepoint(event.pos):
-                        running = False
-                        main_menu()
-            
-            if event.type == KEYDOWN:
-                if event.key == K_ESCAPE:
-                    show_ingamemenu = True
     
+            # No check for current_state, so occurs regardless of state, happens at anytime inside the for event in pygame.event.get():
+            if menubutt_rect.collidepoint((mx, my)):
+                #print("Hey there is collision")
+                if click:
+                    return  # Goes back to main menu, as it is the one that calls game
+
               
         keys = pygame.key.get_pressed()
 
@@ -414,17 +602,15 @@ def enter_wilds():
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             players_rect.x += vel
         
+        if keys[pygame.K_ESCAPE]:
+            running = False
+            main_menu()
+
         
         if keys[pygame.K_i]:
             show_inventory = True
-
     
-        if show_ingamemenu:
-            screen.blit(ingamemenu, ingamemenu_rect)
-            screen.blit(ingamemenu_exit_button, ingamemenu_exit_button_rect)
-            screen.blit(ingamemenu_returnmain_button, ingamemenu_returnmain_button_rect)
         
-
         if show_inventory:
             screen.blit(player_inventory_image, player_inventory_rect)
             screen.blit(inventoryexit_button, inventoryexit_button_rect)
@@ -470,11 +656,10 @@ def enter_wilds():
                     current_slimes -= 1
                     # Reset the enemy's position to the top of the screen
                     enemy_rect.x = random.randint(0, screen_width - enemy_rect.width)
-                    enemy_rect.y = - enemy_rect.height
+                    enemy_rect.y = -enemy_rect.height
 
                     #adds one to the player_score or enemies killed, I really need to pick one and stick with it.
                     player_score += 1
-                    player_health += 10
 
                     # Remove the magic attack
                     if (magic_attack_rect,direction) in magic_attacks:
@@ -487,26 +672,6 @@ def enter_wilds():
         player_score_text = font.render("Enemies Killed: " + str(player_score), False, (50, 50, 75))
         player_score_text_rect = player_score_text.get_rect(midleft = (50, 125)) #this is not a button it's the 'background' to the text
         screen.blit(player_score_text,player_score_text_rect)
-
-        player_health_base = pygame.Rect(100, 175, 150, 27)
-        player_health_active = pygame.Rect(100, 175, player_health, 27)
-        
-            
-         # Here I want to load text to add to my health bars
-        health_text = font.render("Hp: " + str(player_health), False, (65,67,69))
-        health_text_rect = health_text.get_rect(topleft = (100,173))
-
-            
-            
-        # Here I am drawing instead of blitting my health bars
-        pygame.draw.rect(screen, (200, 15, 15), player_health_base)
-        pygame.draw.rect(screen, (15, 200, 15), player_health_active)
-
-
-
-        #here I am going to draw/render/blit my health text to the rects.
-        screen.blit(health_text, health_text_rect)
-        #screen.blit(playerlevel_text, playerlevel_text_rect)
 
 
 
@@ -526,9 +691,6 @@ def enter_wilds():
             player_gravity = 0
             enter_village()
 
-        if player_health >= 150:
-            player_health = 150
-
         screen.blit(players_image,players_rect)
         screen.blit(player_score_text, player_score_text_rect)
 
@@ -544,9 +706,6 @@ def enter_village():
     gravity = 0.2
     ground_tile_height = 32
     ground_depth = 3
-    show_inventory = False
-
-    show_ingamemenu = False
 
     screen.fill("lightgray")
 
@@ -563,41 +722,14 @@ def enter_village():
     
 
     players_rect = players_image.get_rect(center=(250, 650))
-    player_inventory_image = pygame.image.load('graphics/ingamegraphics/playerinventory.png')
-    player_inventory_rect = pygame.Rect(200,200, player_inventory_image.get_width(), player_inventory_image.get_height())
-    inventoryexit_button = pygame.image.load('graphics/ingamegraphics/inventory_exit_button.png')
-    inventoryexit_button_rect = pygame.Rect(player_inventory_rect.right - 32, player_inventory_rect.top, 30,30)
 
     running = True
-    click = False
 
     while running:
         for event in pygame.event.get():
-            if event.type == QUIT:
+            if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-                        
-            if event.type == MOUSEBUTTONDOWN:
-                    
-                if event.button == 1:
-                    click = True
-
-                if event.button == 1 and show_inventory:
-                    if inventoryexit_button_rect.collidepoint(event.pos):
-                        show_inventory = False
-
-                if event.button == 1 and show_ingamemenu:
-                    if ingamemenu_exit_button_rect.collidepoint(event.pos):
-                        show_ingamemenu = False
-                    if ingamemenu_returnmain_button_rect.collidepoint(event.pos):
-                        running = False
-                        main_menu()
-            
-            if event.type == KEYDOWN:
-                if event.key == K_ESCAPE:
-                    show_ingamemenu = True
-
-
 
         player_gravity += gravity
         players_rect.y += player_gravity
@@ -626,21 +758,14 @@ def enter_village():
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             players_rect.x += vel
         
-        if keys[pygame.K_i]:
-            show_inventory = True
+        if keys[pygame.K_ESCAPE]:
+            running = False
+            main_menu()
+
 
         if players_rect.colliderect(thewildsign_rect):
             player_gravity = 0
             enter_wilds()
-
-        if show_ingamemenu:
-            screen.blit(ingamemenu, ingamemenu_rect)
-            screen.blit(ingamemenu_exit_button, ingamemenu_exit_button_rect)
-            screen.blit(ingamemenu_returnmain_button, ingamemenu_returnmain_button_rect)
-        
-        if show_inventory:
-            screen.blit(player_inventory_image, player_inventory_rect)
-            screen.blit(inventoryexit_button, inventoryexit_button_rect)
 
         screen.blit(players_image, players_rect)
 
@@ -671,7 +796,7 @@ def spells_library():
     
     screen.fill("lightgray")
         
-    screen.blit(menubutton, menubutton_rect)
+    screen.blit(menubutton, menubutt_rect)
     screen.blit(bookofspells, bookofspells_rect)
     running = True
     
@@ -698,7 +823,7 @@ def spells_library():
                 
 
             # No check for current_state, so occurs regardless of state
-            if menubutton_rect.collidepoint((mx, my)):
+            if menubutt_rect.collidepoint((mx, my)):
                 #print("Hey there is collision")
                 if click:
                     return  # Goes back to main menu, as it is the one that calls game
@@ -712,7 +837,7 @@ def spells_library():
 def options():
     screen.fill("lightgray")
         
-    screen.blit(menubutton, menubutton_rect)
+    screen.blit(menubutton, menubutt_rect)
     running = True
     
     while running:
@@ -738,7 +863,7 @@ def options():
                 
 
             # No check for current_state, so occurs regardless of state
-            if menubutton_rect.collidepoint((mx, my)):
+            if menubutt_rect.collidepoint((mx, my)):
                 #print("Hey there is collision")
                 if click:
                     return  # Goes back to main menu, as it is the one that calls game
