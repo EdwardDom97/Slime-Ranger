@@ -801,6 +801,10 @@ def enter_wilds(selected_player):
         if player_health >= 150:
             player_health = 150
 
+        if player_health <= 0:
+            player_score -= 10
+            enter_village(selected_player)
+
         screen.blit(players_image,players_rect)
         screen.blit(player_score_text, player_score_text_rect)
 
