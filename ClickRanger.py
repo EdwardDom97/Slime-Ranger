@@ -9,6 +9,7 @@ import pygame, sys
 import random
 import time
 import math
+#import pygame_textinput   
 #import time to actually work on this
 
 from pygame.locals import *
@@ -52,6 +53,14 @@ ingamemenu_returnmain_button = pygame.image.load('graphics/ingamegraphics/mainme
 ingamemenu_returnmain_button_rect = ingamemenu_returnmain_button.get_rect()
 ingamemenu_returnmain_button_rect.center = ingamemenu_rect.center
 
+ingamemenu_savegamebutton = pygame.image.load('graphics/savegamebutton.png')
+ingamemenu_savegamebutton_rect = ingamemenu_savegamebutton.get_rect()
+ingamemenu_savegamebutton_rect.centery = ingamemenu_rect.centery + 50
+ingamemenu_savegamebutton_rect.centerx = ingamemenu_rect.centerx 
+
+
+
+
 
 #05/16/2023 I want to play with my menu button locations,perhaps try setting the x value as half of the width of the screen so it's centered. 
 
@@ -72,7 +81,8 @@ bookofspells_rect = bookofspells.get_rect(topleft = (1,1))
 
 
 click = False
-player_score = 0
+#player_score = 0
+player = 'player_name'
 
 
 def main_menu(): 
@@ -132,12 +142,49 @@ def main_menu():
 
             if load_game_button_rect.collidepoint((mx,my)):
                 if click:
-                    enter_village()
-
+                    loaded_data = load_saved_player_data()
+                    if loaded_data is not None:
+                        if 'player' in loaded_data:
+                            selected_player = loaded_data['name']
+                            enter_village(selected_player)
+                    else:
+                        main_menu()
+            
                     
          
         pygame.display.update()
         clock.tick(60)
+
+
+def save_player_data(name, player, score):
+    with open('save_file.txt', 'w') as file:
+        file.write(f'Player Name: {name}\n')
+        file.write(f'Selected Player: {player}\n')
+        file.write(f'Player Score: {score}\n')
+
+
+def load_saved_player_data():
+    try:
+        with open('save_file.txt', 'r') as file:
+            loaded_data = {}
+            for line in file:
+                line = line.strip()
+                if line.startswith('Player Name:'):
+                    loaded_data['name'] = line.split(':')[1].strip()
+                elif line.startswith('Selected Player:'):
+                    loaded_data['player'] = line.split(':')[1].strip()
+                elif line.startswith('Player Score:'):
+                    loaded_data['score'] = int(line.split(':')[1].strip())
+            return loaded_data
+
+    except FileNotFoundError:
+        print('save file not found.')
+    except Exception as e:
+        print(f'Error loading saved player data: {str(e)}')
+
+
+
+
 
 
 def character_creation_screen():
@@ -146,26 +193,48 @@ def character_creation_screen():
     character = {}  # Dictionary to store character attributes
     click = False
     button_pressed = False
+    WHITE = (255, 255, 255)
+    BLACK = (0, 0 ,0)
 
     newplayerscreen = pygame.image.load('graphics/createplayerwindow.png')
     newplayerscreen_rect = newplayerscreen.get_rect(midleft = (400,400))
     menubutton = pygame.image.load('graphics/menubutton.png')
     startgamebutton = pygame.image.load('graphics/startbutton.png')
-    chooseplayerbutton = pygame.image.load('graphics/chooseplayer.png')
+    #chooseplayerbutton = pygame.image.load('graphics/chooseplayer.png')
 
-    menubutton_rect = menubutton.get_rect(bottomleft=(newplayerscreen_rect.left, newplayerscreen_rect.bottom))
-    chooseplayerbutton_rect = chooseplayerbutton.get_rect(bottom=(newplayerscreen_rect.bottom), centerx=newplayerscreen_rect.centerx)
-    startgamebutton_rect = startgamebutton.get_rect(bottomright=(newplayerscreen_rect.right, newplayerscreen_rect.bottom))
+    menubutton_rect = menubutton.get_rect(bottomleft=(newplayerscreen_rect.left, newplayerscreen_rect.bottom - 64))
+    #chooseplayerbutton_rect = chooseplayerbutton.get_rect(bottom=(newplayerscreen_rect.bottom - 64), centerx=newplayerscreen_rect.centerx)
+    startgamebutton_rect = startgamebutton.get_rect(bottomright=(newplayerscreen_rect.right, newplayerscreen_rect.bottom - 64))
 
-    player_options = ['graphics/ingamegraphics/players/playeroption01.png', 'graphics/ingamegraphics/players/playeroption02.png', 'graphics/ingamegraphics/players/playeroption03.png']
+    hero_treddo = pygame.image.load('graphics/ingamegraphics/players/treddo.png')
+    hero_treddo_rect = hero_treddo.get_rect(topright=(newplayerscreen_rect.right - 96, newplayerscreen_rect.centery))
 
-    clock.tick(1)
+    hero_rose = pygame.image.load('graphics/ingamegraphics/players/rose.png')
+    hero_rose_rect = hero_rose.get_rect(topright=(newplayerscreen_rect.right - 216, newplayerscreen_rect.centery))
+
+    #player_options = ['graphics/ingamegraphics/players/playeroption01.png', 'graphics/ingamegraphics/players/playeroption02.png', 'graphics/ingamegraphics/players/playeroption03.png']
+
+    player_score = 0
+    user_input = ''
+    selected_player = None
+
+
+    clock.tick()
     
     while True:
         # ... character creation screen logic ...
         screen.fill('darkgray')
 
         mx,my = pygame.mouse.get_pos()
+
+        text_surface = font.render('Enter Hero Name: ', True, (255,255,255))
+        text_surface_rect = text_surface.get_rect(bottomleft = (newplayerscreen_rect.left, newplayerscreen_rect.bottom - 264))
+        #save_data = ''
+    
+        
+        
+        #player_image = pygame.image.load(random.choice(player_options))
+        #player_rect = player_image.get_rect(topright=(newplayerscreen_rect.right, newplayerscreen_rect.top))
         
 
         for event in pygame.event.get():
@@ -173,34 +242,81 @@ def character_creation_screen():
                 pygame.quit()
                 sys.exit()
 
+
+            if event.type == KEYDOWN:
+                if event.key == K_BACKSPACE:
+                    # Remove the last character from the user input
+                    user_input = user_input[:-1]
+                else:
+                # Append the pressed character to the user input
+                    user_input += event.unicode
+
+
+
+                if event.type == KEYDOWN:
+                    if event.key == K_RETURN:
+                        break
+
             if event.type == MOUSEBUTTONDOWN:
                 if event.button == 1 and not button_pressed:
                     click = True
                     button_pressed = True
+
+
+
+                    if hero_treddo_rect.collidepoint(mx, my):
+                        selected_player = 'Treddo'
+                    elif hero_rose_rect.collidepoint(mx, my):
+                        selected_player = 'Rose'
+
+                    #if chooseplayerbutton_rect.collidepoint(mx, my):
+                        #player_image = pygame.image.load(random.choice(player_options))
+                        #player_rect = player_image.get_rect(topright=(newplayerscreen_rect.right, newplayerscreen_rect.top))
             # ... handle user input and interactions ...
             if event.type == MOUSEBUTTONUP:
                 if event.button == 1:
                     button_pressed = False
                 
         if click and startgamebutton_rect.collidepoint((mx, my)):
-            #print('there was a click here but nothing else')
-            enter_village()
+            if user_input and selected_player:
+                save_player_data(selected_player, user_input, player_score)  # Call a function to save the data
+                enter_village(selected_player)
+
+
+
+
+
+        if click and menubutton_rect.collidepoint((mx, my)):
+            main_menu()
 
         
         # ... update UI and render the character creation screen ...
-        screen.blit(newplayerscreen, newplayerscreen_rect)
+        input_x = newplayerscreen_rect.left + 10
+        input_y = newplayerscreen_rect.bottom - 214
+        input_surface = font.render(user_input, True, (255, 255, 255))
+        input_surface_rect = pygame.Rect(input_x, input_y, 200, 30)
+        #screen.blit(newplayerscreen, newplayerscreen_rect)
+        screen.blit(text_surface, text_surface_rect)
+        pygame.draw.rect(screen, (255, 255, 255), input_surface_rect, 2)
+        screen.blit(input_surface, input_surface_rect)
         screen.blit(menubutton, menubutton_rect)
-        screen.blit(chooseplayerbutton, chooseplayerbutton_rect)
+        #screen.blit(chooseplayerbutton, chooseplayerbutton_rect)
         screen.blit(startgamebutton, startgamebutton_rect)
+        screen.blit(hero_treddo, hero_treddo_rect)
+        screen.blit(hero_rose, hero_rose_rect)
 
-        if button_pressed and chooseplayerbutton_rect.collidepoint(mx, my):
-            player_image = pygame.image.load(random.choice(player_options))
-            player_rect = player_image.get_rect(topright=(newplayerscreen_rect.right, newplayerscreen_rect.top))
-            screen.blit(player_image, player_rect)
+        #if button_pressed and chooseplayerbutton_rect.collidepoint(mx, my):
+            #player_image = pygame.image.load(random.choice(player_options))
+            #player_rect = player_image.get_rect(topright=(newplayerscreen_rect.right, newplayerscreen_rect.top))
 
+        if selected_player == 'Treddo':
+            pygame.draw.rect(screen, (255,0,0), hero_treddo_rect, 2)
+        elif selected_player == 'Rose':
+            pygame.draw.rect(screen, (255,0,0), hero_rose_rect, 2)
 
 
         pygame.display.update()
+        clock.tick()
         
 
         click = False
@@ -209,9 +325,10 @@ def character_creation_screen():
 
 
 #This serves to create an in-game menu function outside of the wild and village loops so the main menu can be pressed whenever.
-def show_ingame_menu():
+def show_ingame_menu(selected_player):
     #I set the value to false so it only appears when the player pressed the right key, in this case being escape.
     show_ingamemenu = False
+    user_input =''
 
     while True:
         #here I am going to add the code that allows the player to open the in game menu
@@ -227,25 +344,161 @@ def show_ingame_menu():
 
                 if show_ingame_menu and ingamemenu_returnmain_button_rect.collidepoint(event.pos):
                     main_menu()
-            
+
+                if show_ingame_menu and ingamemenu_savegamebutton_rect.collidepoint(event.pos):
+                    save_player_data((selected_player, user_input, player_score)) #would I also put in player score 
+
 
         
         if show_ingamemenu:
             screen.blit(ingamemenu,ingamemenu_rect)
             screen.blit(ingamemenu_exit_button, ingamemenu_exit_button_rect)
             screen.blit(ingamemenu_returnmain_button, ingamemenu_returnmain_button_rect)
+            screen.blit(ingamemenu_savegamebutton, ingamemenu_savegamebutton_rect)
 
 
         pygame.display.update()
         clock.tick(60)
     
+def enter_village(selected_player):
+    vel = 6
+    player_gravity = 0
+    gravity = 0.2
+    ground_tile_height = 32
+    ground_depth = 3
+    show_inventory = False
+    
+
+    show_ingamemenu = False
+
+    screen.fill("lightgray")
+
+    groundtile = pygame.image.load('graphics/ingamegraphics/grassblock.png')
+    undergroundtile = pygame.image.load('graphics/ingamegraphics/dirtblock.png')
+    #players_image = pygame.image.load('graphics/player.png')
+    players_image = pygame.image.load(f'graphics/ingamegraphics/players/{selected_player.lower()}.png')  # Load the image based on the selected player
+
+    thewilds_sign = pygame.image.load('graphics/ingamegraphics/thewildsign.png')
+    village_spawn = pygame.image.load('graphics/village/spawncrystal.png')
+
+    #groundtile_rect = groundtile.get_rect()
+    groundtile_rect = pygame.Rect(0, screen_height - 96, screen_width, 32)
+    thewildsign_rect = thewilds_sign.get_rect(left = 0, bottom = groundtile_rect.top)
+    village_spawn_rect = village_spawn.get_rect(left = 600, bottom = groundtile_rect.top)
+    
+
+    players_rect = players_image.get_rect(center=(250, 650))
+    player_inventory_image = pygame.image.load('graphics/ingamegraphics/playerinventory.png')
+    player_inventory_rect = pygame.Rect(200,200, player_inventory_image.get_width(), player_inventory_image.get_height())
+    inventoryexit_button = pygame.image.load('graphics/ingamegraphics/inventory_exit_button.png')
+    inventoryexit_button_rect = pygame.Rect(player_inventory_rect.right - 32, player_inventory_rect.top, 30,30)
 
 
-def enter_wilds():
+    saved_data = load_saved_player_data()
+    if saved_data is not None:
+        user_input = saved_data.get('player', '')  # Assign the saved name to user_input
+
+
+
+    running = True
+    click = False
+
+
+
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+                        
+            if event.type == MOUSEBUTTONDOWN:
+                    
+                if event.button == 1:
+                    click = True
+
+                if event.button == 1 and show_inventory:
+                    if inventoryexit_button_rect.collidepoint(event.pos):
+                        show_inventory = False
+
+                if event.button == 1 and show_ingamemenu:
+                    if ingamemenu_exit_button_rect.collidepoint(event.pos):
+                        show_ingamemenu = False
+                    if ingamemenu_returnmain_button_rect.collidepoint(event.pos):
+                        running = False
+                        main_menu()
+
+                    if ingamemenu_savegamebutton_rect.collidepoint(event.pos):
+                        save_player_data(selected_player, user_input, player_score)
+
+            
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    show_ingamemenu = True
+
+
+
+        player_gravity += gravity
+        players_rect.y += player_gravity
+
+        if players_rect.bottom >= groundtile_rect.top:
+            players_rect.bottom = groundtile_rect.top
+            player_gravity = 0
+
+        screen.fill("lightgray")
+        screen.blit(thewilds_sign, thewildsign_rect)
+        screen.blit(village_spawn, village_spawn_rect)
+
+        for y in range(screen_height - ground_tile_height * ground_depth, screen_height, ground_tile_height):
+            for x in range(0, screen_width, ground_tile_height):
+                if y == screen_height - ground_tile_height * ground_depth:
+                    screen.blit(groundtile, (x, y))
+                else:
+                    screen.blit(undergroundtile, (x, y))
+
+        keys = pygame.key.get_pressed()
+
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]: #yay movement, this was more challening than initially though
+            #print('left was pressed')
+            players_rect.x -= vel + 1
+
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+            players_rect.x += vel
+        
+        if keys[pygame.K_i]:
+            show_inventory = True
+
+        if players_rect.colliderect(thewildsign_rect):
+            player_gravity = 0
+            enter_wilds(selected_player)
+
+        if show_ingamemenu:
+            screen.blit(ingamemenu, ingamemenu_rect)
+            screen.blit(ingamemenu_exit_button, ingamemenu_exit_button_rect)
+            screen.blit(ingamemenu_returnmain_button, ingamemenu_returnmain_button_rect)
+            screen.blit(ingamemenu_savegamebutton, ingamemenu_savegamebutton_rect)
+        
+        if show_inventory:
+            screen.blit(player_inventory_image, player_inventory_rect)
+            screen.blit(inventoryexit_button, inventoryexit_button_rect)
+
+        screen.blit(players_image, players_rect)
+
+        pygame.display.update()
+        clock.tick(60)
+
+
+
+    pygame.quit()
+
+
+def enter_wilds(selected_player):
+
+    global player_score
 
     #Here I want all my player variables
-    player_health = 150
-    player_score = 0 #also could be referred to as the number of enemies killed. I'm to implement a real inventory and items soon.
+    player_health = 150 #either treddo or rose's health, or whatever the player has named their character
+     #also could be referred to as the number of enemies killed. I'm to implement a real inventory and items soon.
     vel = 6 #vel, short for velocity, could be called 'movement' but represents the rate at which it will move.
     gravity = 0.2
     player_gravity = 0.0
@@ -256,7 +509,7 @@ def enter_wilds():
     spell_cast_timer = 0
     spell_speed = 10
     magic_attacks = []
-
+    #player_score = 0
     #Here I want my Environment vairables
     ground_depth = 3
     ground_tile_height = 32
@@ -280,7 +533,9 @@ def enter_wilds():
     undergroundtile = pygame.image.load('graphics/ingamegraphics/dirtblock.png')
 
     #Player, enemies, and others.
-    players_image = pygame.image.load('graphics/player.png')
+    #players_image = pygame.image.load('graphics/player.png')
+    players_image = pygame.image.load(f'graphics/ingamegraphics/players/{selected_player.lower()}.png')  # Load the image based on the selected player
+
     earthslime_enemy = pygame.image.load('graphics/ingamegraphics/earthslime.png')
     magic_attack = pygame.image.load('graphics/ingamegraphics/manablast.png')
     sign_village = pygame.image.load('graphics/ingamegraphics/townsign.png')
@@ -307,11 +562,21 @@ def enter_wilds():
     enemy_rect.x = random.randint(0, screen_width - enemy_rect.width)
     enemy_list.append(enemy_rect)
 
+    saved_data = load_saved_player_data()
+    if saved_data is not None:
+        user_input = saved_data.get('player', '')  # Assign the saved name to user_input
+        player_score = saved_data.get('score', '')
+
 
     running = True
     
-    while running:
 
+
+
+
+    while running:
+        
+        
         elapsed_time = clock.tick(60)
 
         player_gravity += gravity
@@ -322,6 +587,8 @@ def enter_wilds():
     
         screen.fill('darkgrey')
         screen.blit(sign_village, sign_rect)
+
+        
     
 
         for y in range(screen_height - ground_tile_height * ground_depth, screen_height, ground_tile_height):
@@ -399,7 +666,11 @@ def enter_wilds():
                     if ingamemenu_returnmain_button_rect.collidepoint(event.pos):
                         running = False
                         main_menu()
-            
+                    if ingamemenu_savegamebutton_rect.collidepoint(event.pos):
+                        save_player_data(selected_player, user_input, player_score)
+
+
+
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
                     show_ingamemenu = True
@@ -423,6 +694,7 @@ def enter_wilds():
             screen.blit(ingamemenu, ingamemenu_rect)
             screen.blit(ingamemenu_exit_button, ingamemenu_exit_button_rect)
             screen.blit(ingamemenu_returnmain_button, ingamemenu_returnmain_button_rect)
+            screen.blit(ingamemenu_savegamebutton, ingamemenu_savegamebutton_rect)
         
 
         if show_inventory:
@@ -524,7 +796,7 @@ def enter_wilds():
 
         if players_rect.colliderect(sign_rect):
             player_gravity = 0
-            enter_village()
+            enter_village(selected_player)
 
         if player_health >= 150:
             player_health = 150
@@ -538,121 +810,6 @@ def enter_wilds():
 
     pygame.quit()
 
-def enter_village():
-    vel = 6
-    player_gravity = 0
-    gravity = 0.2
-    ground_tile_height = 32
-    ground_depth = 3
-    show_inventory = False
-
-    show_ingamemenu = False
-
-    screen.fill("lightgray")
-
-    groundtile = pygame.image.load('graphics/ingamegraphics/grassblock.png')
-    undergroundtile = pygame.image.load('graphics/ingamegraphics/dirtblock.png')
-    players_image = pygame.image.load('graphics/player.png')
-    thewilds_sign = pygame.image.load('graphics/ingamegraphics/thewildsign.png')
-    village_spawn = pygame.image.load('graphics/village/spawncrystal.png')
-
-    #groundtile_rect = groundtile.get_rect()
-    groundtile_rect = pygame.Rect(0, screen_height - 96, screen_width, 32)
-    thewildsign_rect = thewilds_sign.get_rect(left = 0, bottom = groundtile_rect.top)
-    village_spawn_rect = village_spawn.get_rect(left = 600, bottom = groundtile_rect.top)
-    
-
-    players_rect = players_image.get_rect(center=(250, 650))
-    player_inventory_image = pygame.image.load('graphics/ingamegraphics/playerinventory.png')
-    player_inventory_rect = pygame.Rect(200,200, player_inventory_image.get_width(), player_inventory_image.get_height())
-    inventoryexit_button = pygame.image.load('graphics/ingamegraphics/inventory_exit_button.png')
-    inventoryexit_button_rect = pygame.Rect(player_inventory_rect.right - 32, player_inventory_rect.top, 30,30)
-
-    running = True
-    click = False
-
-    while running:
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
-                        
-            if event.type == MOUSEBUTTONDOWN:
-                    
-                if event.button == 1:
-                    click = True
-
-                if event.button == 1 and show_inventory:
-                    if inventoryexit_button_rect.collidepoint(event.pos):
-                        show_inventory = False
-
-                if event.button == 1 and show_ingamemenu:
-                    if ingamemenu_exit_button_rect.collidepoint(event.pos):
-                        show_ingamemenu = False
-                    if ingamemenu_returnmain_button_rect.collidepoint(event.pos):
-                        running = False
-                        main_menu()
-            
-            if event.type == KEYDOWN:
-                if event.key == K_ESCAPE:
-                    show_ingamemenu = True
-
-
-
-        player_gravity += gravity
-        players_rect.y += player_gravity
-
-        if players_rect.bottom >= groundtile_rect.top:
-            players_rect.bottom = groundtile_rect.top
-            player_gravity = 0
-
-        screen.fill("lightgray")
-        screen.blit(thewilds_sign, thewildsign_rect)
-        screen.blit(village_spawn, village_spawn_rect)
-
-        for y in range(screen_height - ground_tile_height * ground_depth, screen_height, ground_tile_height):
-            for x in range(0, screen_width, ground_tile_height):
-                if y == screen_height - ground_tile_height * ground_depth:
-                    screen.blit(groundtile, (x, y))
-                else:
-                    screen.blit(undergroundtile, (x, y))
-
-        keys = pygame.key.get_pressed()
-
-        if keys[pygame.K_LEFT] or keys[pygame.K_a]: #yay movement, this was more challening than initially though
-            #print('left was pressed')
-            players_rect.x -= vel + 1
-
-        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            players_rect.x += vel
-        
-        if keys[pygame.K_i]:
-            show_inventory = True
-
-        if players_rect.colliderect(thewildsign_rect):
-            player_gravity = 0
-            enter_wilds()
-
-        if show_ingamemenu:
-            screen.blit(ingamemenu, ingamemenu_rect)
-            screen.blit(ingamemenu_exit_button, ingamemenu_exit_button_rect)
-            screen.blit(ingamemenu_returnmain_button, ingamemenu_returnmain_button_rect)
-        
-        if show_inventory:
-            screen.blit(player_inventory_image, player_inventory_rect)
-            screen.blit(inventoryexit_button, inventoryexit_button_rect)
-
-        screen.blit(players_image, players_rect)
-
-        pygame.display.update()
-        clock.tick(60)
-
-
-
-    pygame.quit()
-
-
-
     #INSERT THE MUTHAFRICKIN CODE FOR THE NEWEST ALMOST UPDATE ENTER VILLAGE!
 
 """05/20/23 12:56 AM I did it!, I can now move my character around and off the screen,
@@ -661,9 +818,6 @@ def enter_village():
  I might spice it up with gamepad controls too.
 """
 #2:24am after messing around some there is so much to do.
-
-
-
 
 
 
