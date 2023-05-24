@@ -5,6 +5,8 @@
 #as of 05/22/23 The Card Duel feature will be removed as set aside. Click Ranger will now Turn Into an updated version of my first game release
 #Slime Ranger. Slime Ranger will be a 2d platformer to my designs, whereas Click Ranger will be a Click-Based Card game. 
 
+
+
 import pygame, sys
 import random
 import time
