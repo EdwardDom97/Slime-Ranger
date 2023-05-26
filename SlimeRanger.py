@@ -11,6 +11,7 @@ import pygame, sys
 import random
 import time
 import math
+import textwrap
 #import pygame_textinput   
 #import time to actually work on this
 
@@ -363,40 +364,80 @@ def show_ingame_menu(selected_player):
         clock.tick(60)
     
 def enter_village(selected_player):
-    vel = 6
-    player_gravity = 0
-    gravity = 0.2
-    ground_tile_height = 32
-    ground_depth = 3
-    show_inventory = False
-    
 
-    show_ingamemenu = False
 
     screen.fill("lightgray")
 
+
+    #Environment Variables
+    gravity = 0.2
+    ground_tile_height = 32
+    ground_depth = 3
     groundtile = pygame.image.load('graphics/ingamegraphics/grassblock.png')
-    undergroundtile = pygame.image.load('graphics/ingamegraphics/dirtblock.png')
-    #players_image = pygame.image.load('graphics/player.png')
-    players_image = pygame.image.load(f'graphics/ingamegraphics/players/{selected_player.lower()}.png')  # Load the image based on the selected player
-
-    thewilds_sign = pygame.image.load('graphics/ingamegraphics/thewildsign.png')
-    village_spawn = pygame.image.load('graphics/village/spawncrystal.png')
-
-    #groundtile_rect = groundtile.get_rect()
     groundtile_rect = pygame.Rect(0, screen_height - 96, screen_width, 32)
-    thewildsign_rect = thewilds_sign.get_rect(left = 0, bottom = groundtile_rect.top)
-    village_spawn_rect = village_spawn.get_rect(left = 600, bottom = groundtile_rect.top)
-    
+    undergroundtile = pygame.image.load('graphics/ingamegraphics/dirtblock.png')
+    elapsed_time = 0
 
+    #Player Variables
+    vel = 6
+    player_gravity = 0
+    players_image = pygame.image.load(f'graphics/ingamegraphics/players/{selected_player.lower()}.png')  # Load the image based on the selected player
     players_rect = players_image.get_rect(center=(250, 650))
+    show_inventory = False
+    show_ingamemenu = False
+    interact = False
+
+
+
+    #the nps rects will eventually be made into a list and will have about 5 or 6 npc's displayed every time
+    villagechief_image = pygame.image.load('graphics/village/chiefbrune.png')
+    villagechief_image_rect = villagechief_image.get_rect(center=(350, 750))
+
+    #Non-Playable Character Variables also known as NPC's
+    max_width = 50
+    npcdialogbox = pygame.image.load('graphics/npcdialogbox.png')
+    npcdialogbox_rect = npcdialogbox.get_rect(topleft = (600,650))
+
+
+    text = """I am Chief Brune of this village \n
+    Rosenhall, Nice to meet you traveller"""
+
+    wrapped_lines = textwrap.wrap(text, width=max_width)
+    wrapped_text = '\n'.join(wrapped_lines)
+
+    # Render the wrapped text
+    npc_dialog_text = font.render(wrapped_text, True, (50, 50, 75))
+    npc_dialog_text_rect = npc_dialog_text.get_rect(topleft=(npcdialogbox_rect.left + 10, npcdialogbox_rect.top + 10))
+
+    npc_gravity = 0
+    npc_vel = 3
+    #npc_direction = random.choice([-1,1])
+    #npc_move_timer = random.randint(3000,15000)
+    #npc_wait_time = 0
+    #npc_min_x = 0
+    #npc_max_x = screen_width - villagechief_image_rect.width
+
+
+
+    #objects loaded in the village such as signs, spawn, and houses
+    thewilds_sign = pygame.image.load('graphics/ingamegraphics/thewildsign.png')
+    thewildsign_rect = thewilds_sign.get_rect(left = 0, bottom = groundtile_rect.top)
+    village_spawn = pygame.image.load('graphics/village/spawncrystal.png')
+    village_spawn_rect = village_spawn.get_rect(left = 600, bottom = groundtile_rect.top)
+    village_hall = pygame.image.load('graphics/village/villagehall.png')
+    village_hall_rect = village_hall.get_rect(left = 200, bottom = groundtile_rect.top)
+
+
+    #User Interface Variables
     player_inventory_image = pygame.image.load('graphics/ingamegraphics/playerinventory.png')
     player_inventory_rect = pygame.Rect(200,200, player_inventory_image.get_width(), player_inventory_image.get_height())
     inventoryexit_button = pygame.image.load('graphics/ingamegraphics/inventory_exit_button.png')
     inventoryexit_button_rect = pygame.Rect(player_inventory_rect.right - 32, player_inventory_rect.top, 30,30)
 
 
+
     saved_data = load_saved_player_data()
+
     if saved_data is not None:
         user_input = saved_data.get('player', '')  # Assign the saved name to user_input
         player_score = saved_data.get('score', '')
@@ -440,17 +481,34 @@ def enter_village(selected_player):
                     show_ingamemenu = True
 
 
-
+        #my logic handling player gravity, and what actually makes my character fall
         player_gravity += gravity
         players_rect.y += player_gravity
+
+        #here I am handling NPC logic and gravity and I might have to add gravity per npc unless I discover a better way
+        npc_gravity += gravity
+        villagechief_image_rect.y += npc_gravity
+
+        #environment logic
+        #elapsed_time += clock.tick(60)
+        #npc_wait_time += elapsed_time
+
+
 
         if players_rect.bottom >= groundtile_rect.top:
             players_rect.bottom = groundtile_rect.top
             player_gravity = 0
+        
+        if villagechief_image_rect.bottom >= groundtile_rect.top:
+            villagechief_image_rect.bottom = groundtile_rect.top
+            npc_gravity = 0
+
+
 
         screen.fill("lightgray")
         screen.blit(thewilds_sign, thewildsign_rect)
         screen.blit(village_spawn, village_spawn_rect)
+        screen.blit(village_hall, village_hall_rect)
 
         for y in range(screen_height - ground_tile_height * ground_depth, screen_height, ground_tile_height):
             for x in range(0, screen_width, ground_tile_height):
@@ -471,9 +529,23 @@ def enter_village(selected_player):
         if keys[pygame.K_i]:
             show_inventory = True
 
+        if keys[pygame.K_e]:
+            interact = True
+
         if players_rect.colliderect(thewildsign_rect):
             player_gravity = 0
             enter_wilds(selected_player)
+
+        if interact and players_rect.colliderect(villagechief_image_rect):
+            screen.blit(npcdialogbox, npcdialogbox_rect)
+            screen.blit(npc_dialog_text, npc_dialog_text_rect)
+        else:
+            interact = False
+        
+    
+            
+            
+                
 
         if show_ingamemenu:
             screen.blit(ingamemenu, ingamemenu_rect)
@@ -486,6 +558,7 @@ def enter_village(selected_player):
             screen.blit(inventoryexit_button, inventoryexit_button_rect)
 
         screen.blit(players_image, players_rect)
+        screen.blit(villagechief_image, villagechief_image_rect)
 
         pygame.display.update()
         clock.tick(60)
