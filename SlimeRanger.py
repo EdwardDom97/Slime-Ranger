@@ -205,15 +205,15 @@ def character_creation_screen():
     startgamebutton = pygame.image.load('graphics/startbutton.png')
     #chooseplayerbutton = pygame.image.load('graphics/chooseplayer.png')
 
-    menubutton_rect = menubutton.get_rect(bottomleft=(newplayerscreen_rect.left, newplayerscreen_rect.bottom - 64))
+    menubutton_rect = menubutton.get_rect(bottomleft=(newplayerscreen_rect.left + 56, newplayerscreen_rect.bottom - 64))
     #chooseplayerbutton_rect = chooseplayerbutton.get_rect(bottom=(newplayerscreen_rect.bottom - 64), centerx=newplayerscreen_rect.centerx)
-    startgamebutton_rect = startgamebutton.get_rect(bottomright=(newplayerscreen_rect.right, newplayerscreen_rect.bottom - 64))
+    startgamebutton_rect = startgamebutton.get_rect(bottomright=(newplayerscreen_rect.right - 56, newplayerscreen_rect.bottom - 64))
 
     hero_treddo = pygame.image.load('graphics/ingamegraphics/players/treddo.png')
-    hero_treddo_rect = hero_treddo.get_rect(topright=(newplayerscreen_rect.right - 96, newplayerscreen_rect.centery))
+    hero_treddo_rect = hero_treddo.get_rect(topright=(newplayerscreen_rect.right - 96, newplayerscreen_rect.centery - 16))
 
     hero_rose = pygame.image.load('graphics/ingamegraphics/players/rose.png')
-    hero_rose_rect = hero_rose.get_rect(topright=(newplayerscreen_rect.right - 216, newplayerscreen_rect.centery))
+    hero_rose_rect = hero_rose.get_rect(topright=(newplayerscreen_rect.right - 216, newplayerscreen_rect.centery - 16))
 
     #player_options = ['graphics/ingamegraphics/players/playeroption01.png', 'graphics/ingamegraphics/players/playeroption02.png', 'graphics/ingamegraphics/players/playeroption03.png']
 
@@ -231,7 +231,7 @@ def character_creation_screen():
         mx,my = pygame.mouse.get_pos()
 
         text_surface = font.render('Enter Hero Name: ', True, (255,255,255))
-        text_surface_rect = text_surface.get_rect(bottomleft = (newplayerscreen_rect.left, newplayerscreen_rect.bottom - 264))
+        text_surface_rect = text_surface.get_rect(topleft = (newplayerscreen_rect.left + 64, newplayerscreen_rect.top + 64))
         #save_data = ''
     
         
@@ -294,11 +294,11 @@ def character_creation_screen():
 
         
         # ... update UI and render the character creation screen ...
-        input_x = newplayerscreen_rect.left + 10
-        input_y = newplayerscreen_rect.bottom - 214
-        input_surface = font.render(user_input, True, (255, 255, 255))
+        input_x = newplayerscreen_rect.left + 96
+        input_y = newplayerscreen_rect.top + 132
+        input_surface = font.render(user_input, True, (0, 0, 0))
         input_surface_rect = pygame.Rect(input_x, input_y, 200, 30)
-        #screen.blit(newplayerscreen, newplayerscreen_rect)
+        screen.blit(newplayerscreen, newplayerscreen_rect)
         screen.blit(text_surface, text_surface_rect)
         pygame.draw.rect(screen, (255, 255, 255), input_surface_rect, 2)
         screen.blit(input_surface, input_surface_rect)
