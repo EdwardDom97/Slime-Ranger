@@ -19,10 +19,9 @@ from pygame.locals import *
 
 pygame.init()
 
-
+#Window and global variables.
 screen_width = 1600
 screen_height = 900
-pygame.display.set_caption('Slime Ranger V 0.05 "ENTER VILLAGE"') #yay we are now 0.01 away from the creation, 1 week in
 screen = pygame.display.set_mode((screen_width,screen_height), 0, 32)
 font = pygame.font.SysFont(None, 50)
 clock = pygame.time.Clock()
@@ -32,15 +31,17 @@ clock = pygame.time.Clock()
 #menuloop = pygame.mixer.music.load('gameloop.wav')
 #pygame.mixer.music.play(-1)
 
-# menuimages
-menuintro = font.render("Slime Ranger V 0.05 'ENTER THE VILLAGE!'", False, (180, 180, 165))
+#Client Version
+pygame.display.set_caption('Slime Ranger V 0.05 "ENTER VILLAGE"') #yay we are now 0.01 away from the creation, 1 week in
+versiontag = font.render("Slime Ranger V 0.05 'ENTER THE VILLAGE!'", False, (20, 5, 5))
+versiontag_rect = versiontag.get_rect(topleft = (780, 850))
+
 
 #menu buttons
 new_game_button = pygame.image.load('graphics/newgamebutton.png')
 options_button = pygame.image.load('graphics/optionsbutton.png')
 exit_button = pygame.image.load('graphics/exitbutton.png')
 spell_library_button = pygame.image.load('graphics/librarybutton.png')
-menulogo = pygame.image.load('graphics/menulogo.png')
 load_game_button = pygame.image.load('graphics/loadgamebutton.png')
 menubutton = pygame.image.load('graphics/menubutton.png')
 
@@ -64,7 +65,6 @@ ingamemenu_savegamebutton_rect.centerx = ingamemenu_rect.centerx
 
 
 
-
 #05/16/2023 I want to play with my menu button locations,perhaps try setting the x value as half of the width of the screen so it's centered. 
 
 #05/22/23 working on updates my new menu buttons. 
@@ -73,7 +73,6 @@ load_game_button_rect = load_game_button.get_rect(center = (screen_width/2,275))
 options_rect = options_button.get_rect(center = (screen_width/2,350))
 spelllib_rect = spell_library_button.get_rect(center = (screen_width/2,425))
 exit_rect = exit_button.get_rect(center = (screen_width/2,500))
-menulogo_rect = menulogo.get_rect(topleft = (325, 600))
 menubutton_rect = menubutton.get_rect(topleft = (50,600))
 
 #Spells Menu images
@@ -93,16 +92,13 @@ def main_menu():
         
         mainmenusplash = pygame.image.load('graphics/mainscreensplash.png')
 
-        screen.blit(mainmenusplash, (0,0))
-        
-
-        #screen.fill('grey')
+        screen.blit(mainmenusplash, (0,0))     
         screen.blit(load_game_button, load_game_button_rect)
         screen.blit(new_game_button, new_game_button_rect)
-        screen.blit(menulogo, menulogo_rect)
         screen.blit(options_button, options_rect)
         screen.blit(exit_button, exit_rect)
         screen.blit(spell_library_button, spelllib_rect)
+        screen.blit(versiontag, versiontag_rect)
 
         mx,my = pygame.mouse.get_pos()
 
@@ -152,18 +148,20 @@ def main_menu():
                             enter_village(selected_player)
                     else:
                         main_menu()
-            
-                    
+                                
          
         pygame.display.update()
         clock.tick(60)
 
 
-def save_player_data(name, player, score):
+def save_player_data(name, player, score, health, mana, level):
     with open('save_file.txt', 'w') as file:
         file.write(f'Player Name: {name}\n')
         file.write(f'Selected Player: {player}\n')
         file.write(f'Player Score: {score}\n')
+        file.write(f'Player Health: {health}\n')
+        file.write(f'Player Mana: {mana}\n')
+        file.write(f'Player Level: {level}\n')
 
 
 def load_saved_player_data():
@@ -178,14 +176,18 @@ def load_saved_player_data():
                     loaded_data['player'] = line.split(':')[1].strip()
                 elif line.startswith('Player Score:'):
                     loaded_data['score'] = int(line.split(':')[1].strip())
+                elif line.startswith('Player Health:'):
+                    loaded_data['health'] = int(line.split(':')[1].strip())
+                elif line.startswith('Player Mana:'):
+                    loaded_data['mana'] = int(line.split(':')[1].strip())
+                elif line.startswith('Player Level:'):
+                    loaded_data['level'] = int(line.split(':')[1].strip())
             return loaded_data
 
     except FileNotFoundError:
         print('save file not found.')
     except Exception as e:
         print(f'Error loading saved player data: {str(e)}')
-
-
 
 
 
@@ -220,6 +222,9 @@ def character_creation_screen():
     player_score = 0
     user_input = ''
     selected_player = None
+    player_health = 150
+    player_mana = 10
+    player_level = 0
 
 
     clock.tick()
@@ -234,11 +239,7 @@ def character_creation_screen():
         text_surface_rect = text_surface.get_rect(topleft = (newplayerscreen_rect.left + 64, newplayerscreen_rect.top + 64))
         #save_data = ''
     
-        
-        
-        #player_image = pygame.image.load(random.choice(player_options))
-        #player_rect = player_image.get_rect(topright=(newplayerscreen_rect.right, newplayerscreen_rect.top))
-        
+              
 
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -282,9 +283,8 @@ def character_creation_screen():
                 
         if click and startgamebutton_rect.collidepoint((mx, my)):
             if user_input and selected_player:
-                save_player_data(selected_player, user_input, player_score)  # Call a function to save the data
+                save_player_data(selected_player, user_input, player_score, player_health, player_mana, player_level)  # Call a function to save the data
                 enter_village(selected_player)
-
 
 
 
@@ -331,7 +331,14 @@ def character_creation_screen():
 def show_ingame_menu(selected_player):
     #I set the value to false so it only appears when the player pressed the right key, in this case being escape.
     show_ingamemenu = False
-    user_input =''
+    saved_data = load_saved_player_data()
+
+    if saved_data is not None:
+        user_input = saved_data.get('player', '')  # Assign the saved name to user_input
+        player_score = saved_data.get('score', '')
+        player_health = saved_data.get('health', 150)
+        player_mana = saved_data.get('mana', 10)
+        player_level = saved_data.get('level', 0)
 
     while True:
         #here I am going to add the code that allows the player to open the in game menu
@@ -349,7 +356,7 @@ def show_ingame_menu(selected_player):
                     main_menu()
 
                 if show_ingame_menu and ingamemenu_savegamebutton_rect.collidepoint(event.pos):
-                    save_player_data((selected_player, user_input, player_score)) #would I also put in player score 
+                    save_player_data((selected_player, user_input, player_score, player_health, player_mana, player_level)) #would I also put in player score 
 
 
         
@@ -409,8 +416,11 @@ def enter_village(selected_player):
         "This is the village Rosenhall.",
         "Welcome to our village.",
         "May the wisps guide your path.",
-        "I am Chief Brune, Chief of Rosenhall!",
-        "Have you been by the Ancient Ruins?"
+        "I am Chief Brune, Chief of\nRosenhall!",
+        "Have you been by the Ancient\nRuins?",
+        "Stone Golems are formidable\nfoes",
+        "have you visited the\nCloud District?",
+        "I heard more people are\narriving soon"
 
 
     ]
@@ -419,7 +429,6 @@ def enter_village(selected_player):
    
     npc_gravity = 0
     npc_vel = 3
-
 
     #objects loaded in the village such as signs, spawn, and houses
     thewilds_sign = pygame.image.load('graphics/ingamegraphics/thewildsign.png')
@@ -442,6 +451,9 @@ def enter_village(selected_player):
     if saved_data is not None:
         user_input = saved_data.get('player', '')  # Assign the saved name to user_input
         player_score = saved_data.get('score', '')
+        player_health = saved_data.get('health', 150)
+        player_mana = saved_data.get('mana', 10)
+        player_level = saved_data.get('level', 0)
 
 
 
@@ -473,7 +485,7 @@ def enter_village(selected_player):
                         running = False
                         main_menu()
                     if ingamemenu_savegamebutton_rect.collidepoint(event.pos):
-                        save_player_data(selected_player, user_input, player_score)
+                        save_player_data(selected_player, user_input, player_score, player_health, player_mana, player_level)
 
 
                 if event.button == 1 and npcexitbutton_rect.collidepoint(event.pos):
@@ -497,8 +509,6 @@ def enter_village(selected_player):
         #environment logic
         #elapsed_time += clock.tick(60)
       
-
-
 
         if players_rect.bottom >= groundtile_rect.top:
             players_rect.bottom = groundtile_rect.top
@@ -553,17 +563,32 @@ def enter_village(selected_player):
 
         if players_rect.colliderect(thewildsign_rect):
             player_gravity = 0
+            save_player_data(selected_player, user_input, player_score, player_health, player_mana, player_level)
+
             enter_wilds(selected_player)
   
 
         if show_npcdialogbox:
             if npc_dialog_text is None:  # Check if a quote has not been assigned yet
                 random_quote = random.choice(quotes)
-                npc_dialog_text = font.render(random_quote, True, (0, 0, 0))
-                npc_dialog_text_rect = npc_dialog_text.get_rect(midleft=(npcdialogbox_rect.left + 32, npcdialogbox_rect.top + 64))
+                lines = random_quote.split('\n')  # Split the quote into lines based on line breaks
+                npc_dialog_text = []
+                for line in lines:
+                    npc_dialog_text.append(font.render(line, True, (0, 0, 0)))
+
+                line_height = npc_dialog_text[0].get_height()
+                total_height = line_height * len(npc_dialog_text)
+                npc_dialog_text_rect = npcdialogbox_rect.inflate(-20, -(total_height + 20))
+
             screen.blit(npcdialogbox, npcdialogbox_rect)
-            screen.blit(npc_dialog_text, npc_dialog_text_rect)
+
+            for i, text_surface in enumerate(npc_dialog_text):
+                text_rect = text_surface.get_rect(topleft=(npc_dialog_text_rect.left + 10, npc_dialog_text_rect.top + 10 + (i * line_height)))
+                screen.blit(text_surface, text_rect)
+        
+            
             screen.blit(npcexitbutton, npcexitbutton_rect)
+            #screen.blit(npc_dialog_text, npc_dialog_text_rect)
 
             
         if show_ingamemenu:
@@ -587,13 +612,50 @@ def enter_village(selected_player):
     pygame.quit()
 
 
+#the above is the village loop where the player can interact with npc's buy and sell items, and have a safe place from enemies, and respawn if fallen in combat
+
+#the below code will pertain to my other active states where the player can explore environments, defeat enemies and gather resources and items.
+
+
+#I am going to attempt to make my first enemy class that can then contain multiple enemies instead of just my one earthslime enemy so far.
+class Enemy:
+    def __init__(self, image, spawn_position, health, exp_value, damage, speed, drop_item):
+        self.image = image
+        self.rect = image.get_rect()
+        self.rect.topleft = spawn_position
+        self.health = health
+        self.max_health = health
+        self.exp_value = exp_value
+        self.damage = damage
+        self.speed = speed
+        self.drop_item = drop_item
+        self.gravity = 4
+
+    def update(self, gravity):
+        self.gravity += gravity
+        self.rect.y += self.gravity
+
+    def handle_collision(self, groundtile_rect, players_rect, player_health):
+        if self.rect.colliderect(groundtile_rect):
+            self.gravity = 0
+        if self.rect.colliderect(players_rect):
+            #print('collision but no damage dealt')
+            player_health -= self.damage#this is where I need to ask chatgpt about how to handle damage from different types of enemies.
+        return player_health
+
+    def move(self, velocity):
+        self.rect.x += velocity
+
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)
+        
+
+
+#The wilds is the first area that the player will be able to explore other than the village.
 def enter_wilds(selected_player):
 
-    global player_score
 
     #Here I want all my player variables
-    player_health = 150 #either treddo or rose's health, or whatever the player has named their character
-     #also could be referred to as the number of enemies killed. I'm to implement a real inventory and items soon.
     vel = 6 #vel, short for velocity, could be called 'movement' but represents the rate at which it will move.
     gravity = 0.2
     player_gravity = 0.0
@@ -614,9 +676,37 @@ def enter_wilds(selected_player):
     show_ingamemenu = False
 
     #here I want all of my enemy variables
-    enemy_list = []
-    max_slimes = 10
-    current_slimes = 0
+    earthslime_image = pygame.image.load('graphics/ingamegraphics/earthslime.png')
+    stonegolem_image = pygame.image.load('graphics/ingamegraphics/stonegolem.png')
+
+    enemy_options = [
+        {
+            'image': earthslime_image,
+            'spawn_position': (random.randint(0, screen_width - earthslime_image.get_width()), - earthslime_image.get_height()),
+            'health': 10,
+            'exp_value': 5,
+            'damage': 1,
+            'speed' : 5,
+            'drop_item': 'slime_eyes'
+        },
+        
+        {
+            'image': stonegolem_image,
+            'spawn_position': (- stonegolem_image.get_width(), random.randint(0, screen_height - stonegolem_image.get_height())),
+            'health': 20,
+            'exp_value': 5,
+            'damage': 10,
+            'speed': 2,
+            'drop_item': 'stone_fragment'
+        }
+        #when the time comes I will start to add more enemies, this is just changing from one enemy, to now
+
+        ]
+    
+
+    enemies = []
+    max_enemies = 10
+    current_enemies = 0
     enemy_gravity = 4
     spawn_timer = 0
     spawn_interval = 500
@@ -631,7 +721,6 @@ def enter_wilds(selected_player):
     #players_image = pygame.image.load('graphics/player.png')
     players_image = pygame.image.load(f'graphics/ingamegraphics/players/{selected_player.lower()}.png')  # Load the image based on the selected player
 
-    earthslime_enemy = pygame.image.load('graphics/ingamegraphics/earthslime.png')
     magic_attack = pygame.image.load('graphics/ingamegraphics/manablast.png')
     sign_village = pygame.image.load('graphics/ingamegraphics/townsign.png')
 
@@ -652,25 +741,19 @@ def enter_wilds(selected_player):
     inventoryexit_button_rect = pygame.Rect(player_inventory_rect.right - 32, player_inventory_rect.top, 30,30)
 
 
-    #enemy rect for slime but can and will be updated later.
-    enemy_rect = earthslime_enemy.get_rect()
-    enemy_rect.x = random.randint(0, screen_width - enemy_rect.width)
-    enemy_list.append(enemy_rect)
 
     saved_data = load_saved_player_data()
     if saved_data is not None:
         user_input = saved_data.get('player', '')  # Assign the saved name to user_input
         player_score = saved_data.get('score', '')
-
+        player_health = saved_data.get('health', 150)
+        player_mana = saved_data.get('mana', 10)
+        player_level = saved_data.get('level', 0)
 
     running = True
     
 
-
-
-
     while running:
-        
         
         elapsed_time = clock.tick(60)
 
@@ -682,9 +765,9 @@ def enter_wilds(selected_player):
     
         screen.fill('darkgrey')
         screen.blit(sign_village, sign_rect)
+        #handle_enemy_collision(player_health)
 
         
-    
 
         for y in range(screen_height - ground_tile_height * ground_depth, screen_height, ground_tile_height):
             for x in range(0, screen_width, ground_tile_height):
@@ -694,40 +777,80 @@ def enter_wilds(selected_player):
                     screen.blit(undergroundtile, (x, y))
 
 
+        #print('before enemy loop')
+        for enemy_data in enemy_options:
+            #print(type(enemy_data))
+            enemy_image = enemy_data['image']
+            spawn_position = enemy_data['spawn_position']
+            health = enemy_data['health']
+            exp_value = enemy_data['exp_value']
+            damage = enemy_data['damage']
+            enemy_speed = enemy_data['speed']
+            drop_item = enemy_data['drop_item']
 
-        for enemy_rect in enemy_list:
-            enemy_gravity = 4
-            enemy_gravity += gravity
-            enemy_rect.y += enemy_gravity
-            screen.blit(earthslime_enemy, enemy_rect)
+            if spawn_timer >= spawn_interval and current_enemies <= max_enemies: #I am doing a small change right here because I want to slighlty amp up the slimes and get rid of a cap for now.
+                enemy_option = random.choice(enemy_options)
+                enemy_image = enemy_option['image']
+                spawn_position = enemy_option['spawn_position']
+                health = enemy_option['health']
+                exp_value = enemy_option['exp_value']
+                damage = enemy_option['damage']
+                enemy_speed = enemy_option['speed']
+                drop_item = enemy_option['drop_item']
+
+                enemy = Enemy(enemy_image, spawn_position, health, exp_value, damage, enemy_speed, drop_item)
+                enemies.append(enemy)
+                current_enemies += 1
+                spawn_timer = 0
+
+            
+        #print('after enemy loopdd')
+
+
+        for enemy in enemies:
+            enemy.update(gravity)
+            enemy.handle_collision(groundtile_rect, players_rect, player_health)
+            enemy.move(enemy_speed)
+            player_health = enemy.handle_collision(groundtile_rect, players_rect, player_health)
+            enemy.draw(screen)
+
+            
+            
             #if enemy_rect.y > screen_height:
                 #if the slime somehow goes off screen it will be removed
                 #enemy_list.remove(enemy_rect)
                 #current_slimes -= 1
                 #continue
           
-            if enemy_rect.colliderect(groundtile_rect):
-                enemy_rect.y = groundtile_rect.y - enemy_rect.height  
-                enemy_gravity = 0
-                dx = players_rect.x - enemy_rect.x
-                dy = players_rect.y - enemy_rect.y
-                distance = math.sqrt(dx ** 2 + dy ** 2)
+           # if enemy_rect.colliderect(groundtile_rect):
+                #enemy_rect.y = groundtile_rect.y - enemy_rect.height  
+               # enemy_gravity = 0
+                #dx = players_rect.x - enemy_rect.x
+               #dy = players_rect.y - enemy_rect.y
+               # distance = math.sqrt(dx ** 2 + dy ** 2)
                 
 
             # Adjust slime's x-coordinate towards the player (a mighty thanks to the chatgpt no shame in the game)
-                if dx >= 50 or dx <= -50:
-                    enemy_rect.x += vel * (dx / distance)
+               # if dx >= 50 or dx <= -50:
+                  #aaaaa  enemy_rect.x += vel * (dx / distance)
 
 
-            if enemy_rect.colliderect(players_rect):
-                player_health -= 1
+            #if enemy_rect.colliderect(players_rect):
+                #player_health -= 1
 
         #adding in a collision dectection to stop when the player touches the ground
+
+        def handle_enemy_collision(player_health):
+            for enemy in enemies:
+                enemy.handle_collision(groundtile_rect, players_rect)
+                if enemy.rect.colliderect(players_rect):
+                    print('Collision with player')
+                    player_health -= enemy.damage
+
         if players_rect.colliderect(groundtile_rect):
             players_rect.y = groundtile_rect.y - players_rect.height
             player_gravity = 0
             can_jump = True
-
 
         
         if jumping: #this is for the player might try to do something similar for my slime enemies.
@@ -762,7 +885,7 @@ def enter_wilds(selected_player):
                         running = False
                         main_menu()
                     if ingamemenu_savegamebutton_rect.collidepoint(event.pos):
-                        save_player_data(selected_player, user_input, player_score)
+                        save_player_data(selected_player, user_input, player_score, player_health, player_mana, player_level)
 
 
 
@@ -830,17 +953,18 @@ def enter_wilds(selected_player):
             magic_attack_rect.x += direction[0] * spell_speed
             magic_attack_rect.y += direction[1] * spell_speed
 
-            for enemy_rect in enemy_list:
-                if magic_attack_rect.colliderect(enemy_rect):
+            for enemy in enemies:
+                if magic_attack_rect.colliderect(enemy.rect):
                     #if slime collides with manablast it will be 'killed' or removed.
-                    enemy_list.remove(enemy_rect)
-                    current_slimes -= 1
+                    enemies.remove(enemy)
+                    current_enemies -= 1
                     # Reset the enemy's position to the top of the screen
-                    enemy_rect.x = random.randint(0, screen_width - enemy_rect.width)
-                    enemy_rect.y = - enemy_rect.height
+                    enemy.rect.x = random.randint(0, screen_width - enemy.rect.width)
+                    enemy.rect.y = - enemy.rect.height
 
                     #adds one to the player_score or enemies killed, I really need to pick one and stick with it.
-                    player_score += 1
+                    player_score += 2
+                    player_level += 1
                     player_health += 10
 
                     # Remove the magic attack
@@ -851,7 +975,7 @@ def enter_wilds(selected_player):
             screen.blit(magic_attack, magic_attack_rect)
         
         #here I want to clearly define my player's score and it's rect.
-        player_score_text = font.render("Enemies Killed: " + str(player_score), False, (50, 50, 75))
+        player_score_text = font.render("Player Score: " + str(player_score), False, (50, 50, 75))
         player_score_text_rect = player_score_text.get_rect(midleft = (50, 125)) #this is not a button it's the 'background' to the text
         screen.blit(player_score_text,player_score_text_rect)
 
@@ -877,21 +1001,9 @@ def enter_wilds(selected_player):
 
 
 
-        if spawn_timer >= spawn_interval and current_slimes <= max_slimes: #I am doing a small change right here because I want to slighlty amp up the slimes and get rid of a cap for now.
-            # Spawn a slime enemy
-            enemy_rect = earthslime_enemy.get_rect()
-            enemy_rect.x = random.randint(0, screen_width - enemy_rect.width)
-            enemy_rect.y = -enemy_rect.height
-            enemy_list.append(enemy_rect)
-
-            #add a slime per loop up to the max slime which was defined as 10
-            current_slimes += 1
-            # Reset the spawn timer
-            spawn_timer = 0
-
         if players_rect.colliderect(sign_rect):
             player_gravity = 0
-            save_player_data(selected_player, user_input, player_score)
+            save_player_data(selected_player, user_input, player_score, player_health, player_mana, player_level)
             enter_village(selected_player)
 
         if player_health >= 150:
@@ -899,8 +1011,12 @@ def enter_wilds(selected_player):
 
         if player_health <= 0:
             player_score -= 10
-            save_player_data(selected_player, user_input, player_score)
+            player_health = 25
+            save_player_data(selected_player, user_input, player_score, player_health, player_mana, player_level)
             enter_village(selected_player)
+
+        #if player_score % 10:
+            #player_level += 1
 
         screen.blit(players_image,players_rect)
         screen.blit(player_score_text, player_score_text_rect)
