@@ -50,7 +50,7 @@ ingamemenu = pygame.image.load('graphics/ingamegraphics/ingamemenu.png')
 ingamemenu_rect = ingamemenu.get_rect(midleft = (600,450))
 
 ingamemenu_exit_button = pygame.image.load('graphics/ingamegraphics/inventory_exit_button.png')
-ingamemenu_exit_button_rect = pygame.Rect(ingamemenu_rect.right - 32, ingamemenu_rect.top, 30,30)
+ingamemenu_exit_button_rect = pygame.Rect(ingamemenu_rect.right - 32, ingamemenu_rect.top, 30,30) #refer here to exit button locations.
 
 ingamemenu_returnmain_button = pygame.image.load('graphics/ingamegraphics/mainmenureturnbutton.png')
 ingamemenu_returnmain_button_rect = ingamemenu_returnmain_button.get_rect()
@@ -386,6 +386,7 @@ def enter_village(selected_player):
     show_inventory = False
     show_ingamemenu = False
     interact = False
+    can_interact = False
 
 
 
@@ -394,29 +395,30 @@ def enter_village(selected_player):
     villagechief_image_rect = villagechief_image.get_rect(center=(350, 750))
 
     #Non-Playable Character Variables also known as NPC's
-    max_width = 50
+    show_npcdialogbox = False
     npcdialogbox = pygame.image.load('graphics/npcdialogbox.png')
     npcdialogbox_rect = npcdialogbox.get_rect(topleft = (600,650))
+    npcexitbutton = pygame.image.load('graphics/village/exit_button.png')
+    npcexitbutton_rect = pygame.Rect(npcdialogbox_rect.right - 32, npcdialogbox_rect.top, 30,30)
+    npc_dialog_text = None
+  
+
+    quotes = [
+        "Greetings Traveller!",
+        "A fine day for hunting slimes!",
+        "This is the village Rosenhall.",
+        "Welcome to our village.",
+        "May the wisps guide your path.",
+        "I am Chief Brune, Chief of Rosenhall!",
+        "Have you been by the Ancient Ruins?"
 
 
-    text = """I am Chief Brune of this village \n
-    Rosenhall, Nice to meet you traveller"""
+    ]
 
-    wrapped_lines = textwrap.wrap(text, width=max_width)
-    wrapped_text = '\n'.join(wrapped_lines)
-
-    # Render the wrapped text
-    npc_dialog_text = font.render(wrapped_text, True, (50, 50, 75))
-    npc_dialog_text_rect = npc_dialog_text.get_rect(topleft=(npcdialogbox_rect.left + 10, npcdialogbox_rect.top + 10))
-
+    #this code will attempt to handle or begin the structure to my npc dialog and interaction's with the player.
+   
     npc_gravity = 0
     npc_vel = 3
-    #npc_direction = random.choice([-1,1])
-    #npc_move_timer = random.randint(3000,15000)
-    #npc_wait_time = 0
-    #npc_min_x = 0
-    #npc_max_x = screen_width - villagechief_image_rect.width
-
 
 
     #objects loaded in the village such as signs, spawn, and houses
@@ -435,7 +437,6 @@ def enter_village(selected_player):
     inventoryexit_button_rect = pygame.Rect(player_inventory_rect.right - 32, player_inventory_rect.top, 30,30)
 
 
-
     saved_data = load_saved_player_data()
 
     if saved_data is not None:
@@ -446,7 +447,6 @@ def enter_village(selected_player):
 
     running = True
     click = False
-
 
 
 
@@ -465,16 +465,20 @@ def enter_village(selected_player):
                     if inventoryexit_button_rect.collidepoint(event.pos):
                         show_inventory = False
 
+
                 if event.button == 1 and show_ingamemenu:
                     if ingamemenu_exit_button_rect.collidepoint(event.pos):
                         show_ingamemenu = False
                     if ingamemenu_returnmain_button_rect.collidepoint(event.pos):
                         running = False
                         main_menu()
-
                     if ingamemenu_savegamebutton_rect.collidepoint(event.pos):
                         save_player_data(selected_player, user_input, player_score)
 
+
+                if event.button == 1 and npcexitbutton_rect.collidepoint(event.pos):
+                    show_npcdialogbox = False
+                    npc_dialog_text = None
             
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
@@ -488,10 +492,11 @@ def enter_village(selected_player):
         #here I am handling NPC logic and gravity and I might have to add gravity per npc unless I discover a better way
         npc_gravity += gravity
         villagechief_image_rect.y += npc_gravity
+        
 
         #environment logic
         #elapsed_time += clock.tick(60)
-        #npc_wait_time += elapsed_time
+      
 
 
 
@@ -531,22 +536,36 @@ def enter_village(selected_player):
 
         if keys[pygame.K_e]:
             interact = True
+            #interact = False
+      
+        if interact:
+            if players_rect.colliderect(villagechief_image_rect):
+                show_npcdialogbox = True
+            else:
+                # Calculate the distance between player and NPC
+                distance = abs(players_rect.centerx - villagechief_image_rect.centerx)
+                if distance >= 32:  # Adjust the threshold as needed
+                    interact = False
+                    show_npcdialogbox = False
+                    npc_dialog_text = None
+
+        
 
         if players_rect.colliderect(thewildsign_rect):
             player_gravity = 0
             enter_wilds(selected_player)
+  
 
-        if interact and players_rect.colliderect(villagechief_image_rect):
+        if show_npcdialogbox:
+            if npc_dialog_text is None:  # Check if a quote has not been assigned yet
+                random_quote = random.choice(quotes)
+                npc_dialog_text = font.render(random_quote, True, (0, 0, 0))
+                npc_dialog_text_rect = npc_dialog_text.get_rect(midleft=(npcdialogbox_rect.left + 32, npcdialogbox_rect.top + 64))
             screen.blit(npcdialogbox, npcdialogbox_rect)
             screen.blit(npc_dialog_text, npc_dialog_text_rect)
-        else:
-            interact = False
-        
-    
-            
-            
-                
+            screen.blit(npcexitbutton, npcexitbutton_rect)
 
+            
         if show_ingamemenu:
             screen.blit(ingamemenu, ingamemenu_rect)
             screen.blit(ingamemenu_exit_button, ingamemenu_exit_button_rect)
