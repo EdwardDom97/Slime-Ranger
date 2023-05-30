@@ -1,6 +1,6 @@
-Player Name: Rose
-Selected Player: rose
-Player Score: 36
+Player Name: Treddo
+Selected Player: Basher
+Player Score: 392
 Player Health: 150
 Player Mana: 10
-Player Level: 18
+Player Level: 196

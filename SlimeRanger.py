@@ -638,13 +638,21 @@ class Enemy:
     def handle_collision(self, groundtile_rect, players_rect, player_health):
         if self.rect.colliderect(groundtile_rect):
             self.gravity = 0
+
+
+
         if self.rect.colliderect(players_rect):
             #print('collision but no damage dealt')
             player_health -= self.damage#this is where I need to ask chatgpt about how to handle damage from different types of enemies.
         return player_health
 
-    def move(self, velocity):
-        self.rect.x += velocity
+    def move(self, players_rect):
+        
+        #this code allows the blitted enemies to follow after the player.
+        dx = players_rect.x - self.rect.x
+        distance = math.sqrt(dx ** 2)
+        if dx >= 50 or dx <= -50:
+            self.rect.x += self.speed * (dx / distance)
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
@@ -709,7 +717,7 @@ def enter_wilds(selected_player):
     current_enemies = 0
     enemy_gravity = 4
     spawn_timer = 0
-    spawn_interval = 500
+    spawn_interval = 1000
 
     
     #Here I want to load new images for my Environment, Player, enemies, and other entities, and then User Interface.
@@ -810,7 +818,7 @@ def enter_wilds(selected_player):
         for enemy in enemies:
             enemy.update(gravity)
             enemy.handle_collision(groundtile_rect, players_rect, player_health)
-            enemy.move(enemy_speed)
+            enemy.move(players_rect)
             player_health = enemy.handle_collision(groundtile_rect, players_rect, player_health)
             enemy.draw(screen)
 
@@ -840,12 +848,7 @@ def enter_wilds(selected_player):
 
         #adding in a collision dectection to stop when the player touches the ground
 
-        def handle_enemy_collision(player_health):
-            for enemy in enemies:
-                enemy.handle_collision(groundtile_rect, players_rect)
-                if enemy.rect.colliderect(players_rect):
-                    print('Collision with player')
-                    player_health -= enemy.damage
+
 
         if players_rect.colliderect(groundtile_rect):
             players_rect.y = groundtile_rect.y - players_rect.height
@@ -1082,8 +1085,14 @@ def spells_library():
 
 def options():
     screen.fill("lightgray")
+
+    fullscreenbutton = pygame.image.load('graphics/optionsbuttons/fullscreenop.png')
+    fullscreenbutton_rect = fullscreenbutton.get_rect(topleft = (50,500))
+
+
         
     screen.blit(menubutton, menubutton_rect)
+    screen.blit(fullscreenbutton, fullscreenbutton_rect)
     running = True
     
     while running:
@@ -1113,7 +1122,15 @@ def options():
                 #print("Hey there is collision")
                 if click:
                     return  # Goes back to main menu, as it is the one that calls game
-                
+            
+            if fullscreenbutton_rect.collidepoint((mx, my)):
+                if click:
+                    if pygame.display.get_surface().get_flags() & pygame.FULLSCREEN:
+                        pygame.display.set_mode((screen_width, screen_height))
+                    else:
+                        pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
+                    pygame.display.flip()
+                    options()  # Refresh the screen
 
         pygame.display.update()
 
