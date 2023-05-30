@@ -703,7 +703,10 @@ def enter_wilds(selected_player):
         
         {
             'image': stonegolem_image,
-            'spawn_position': (- stonegolem_image.get_width(), random.randint(0, screen_height - stonegolem_image.get_height())),
+            'spawn_position': (
+                random.choice([0, screen_width - stonegolem_image.get_width()]),
+                random.randint(0, screen_height - stonegolem_image.get_height())
+                ),
             'health': 20,
             'exp_value': 5,
             'damage': 10,
@@ -812,6 +815,16 @@ def enter_wilds(selected_player):
                 enemy = Enemy(enemy_image, spawn_position, health, exp_value, damage, enemy_speed, drop_item)
                 enemies.append(enemy)
                 current_enemies += 1
+                spawn_timer = 0
+
+                if random.random() < 0.15:
+                    spawn_position = (screen_width - spawn_position[0] - enemy_image.get_width(), spawn_position[1])
+
+                    # Spawn the golem from the right side
+                    enemy = Enemy(enemy_image, spawn_position, health, exp_value, damage, enemy_speed, drop_item)
+                    enemies.append(enemy)
+                    current_enemies += 1
+
                 spawn_timer = 0
 
             
@@ -968,8 +981,8 @@ def enter_wilds(selected_player):
                         enemies.remove(enemy)
                         current_enemies -= 1
                         # Reset the enemy's position to the top of the screen
-                        enemy.rect.x = random.randint(0, screen_width - enemy.rect.width)
-                        enemy.rect.y = -enemy.rect.height
+                        #enemy.rect.x = random.randint(0, screen_width - enemy.rect.width)
+                        #enemy.rect.y = -enemy.rect.height
 
                     #adds one to the player_score or enemies killed, I really need to pick one and stick with it.
                     player_score += 2

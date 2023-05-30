@@ -1,6 +1,6 @@
 Player Name: Treddo
 Selected Player: Basher
-Player Score: 622
-Player Health: 25
+Player Score: 842
+Player Health: 150
 Player Mana: 10
-Player Level: 326
+Player Level: 446
