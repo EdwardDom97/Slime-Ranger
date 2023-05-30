@@ -674,14 +674,17 @@ def enter_wilds(selected_player):
     spell_cast_timer = 0
     spell_speed = 10
     magic_attacks = []
-    #player_score = 0
+    spell_damage = 5
+
     #Here I want my Environment vairables
     ground_depth = 3
     ground_tile_height = 32
 
+
     #Here I want logic variables like inventories, items, interactables, and options.
     show_inventory = False
     show_ingamemenu = False
+
 
     #here I want all of my enemy variables
     earthslime_image = pygame.image.load('graphics/ingamegraphics/earthslime.png')
@@ -950,7 +953,7 @@ def enter_wilds(selected_player):
 
                 magic_attacks.append((magic_attack_rect, direction))
 
-                spell_cast_timer = 500
+                spell_cast_timer = 300
 
         for magic_attack_rect, direction in magic_attacks:
             magic_attack_rect.x += direction[0] * spell_speed
@@ -958,12 +961,15 @@ def enter_wilds(selected_player):
 
             for enemy in enemies:
                 if magic_attack_rect.colliderect(enemy.rect):
+                    enemy.health -= spell_damage
+                    print(enemy.health)
                     #if slime collides with manablast it will be 'killed' or removed.
-                    enemies.remove(enemy)
-                    current_enemies -= 1
-                    # Reset the enemy's position to the top of the screen
-                    enemy.rect.x = random.randint(0, screen_width - enemy.rect.width)
-                    enemy.rect.y = - enemy.rect.height
+                    if enemy.health <= 0:
+                        enemies.remove(enemy)
+                        current_enemies -= 1
+                        # Reset the enemy's position to the top of the screen
+                        enemy.rect.x = random.randint(0, screen_width - enemy.rect.width)
+                        enemy.rect.y = -enemy.rect.height
 
                     #adds one to the player_score or enemies killed, I really need to pick one and stick with it.
                     player_score += 2
