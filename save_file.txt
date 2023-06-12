@@ -1,6 +1,7 @@
-Player Name: Treddo
-Selected Player: Basher
-Player Score: 842
-Player Health: 150
-Player Mana: 10
-Player Level: 446
+Selected Player: Rose
+Player Name: ada
+Player Score: 82
+Player Health: 5
+Player Mana: 795
+Player Level: 61
+Hotbar Items: [{'image': <Surface(32x32x24 SW)>, 'name': 'Sip of Health', 'type': 'potion', 'effects': 'restore_health', 'restore_amount': 25, 'value': 20}, {'image': <Surface(32x32x24 SW)>, 'name': 'Ball of Flame', 'type': 'spell', 'magic_attack_image': <Surface(16x16x32 SW)>, 'mana_cost': 8, 'damage': 15, 'spell_speed': 2, 'value': 15}, {'image': <Surface(16x16x32 SW)>, 'name': 'Ring of Restore Mana', 'type': 'trinket', 'effects': 'restore_mana', 'restore_amount': 20, 'value': 25}, {'image': <Surface(32x32x24 SW)>, 'name': 'Sip of Health', 'type': 'potion', 'effects': 'restore_health', 'restore_amount': 25, 'value': 20}, None]

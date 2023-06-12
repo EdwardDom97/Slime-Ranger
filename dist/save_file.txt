@@ -1,0 +1,7 @@
+Selected Player: Rose
+Player Name: ada
+Player Score: 0
+Player Health: 150
+Player Mana: 20
+Player Level: 0
+Hotbar Items: [{'image': <Surface(32x32x24 SW)>, 'name': 'Sip of Mana'}, {'image': <Surface(32x16x32 SW)>, 'name': ' Twig Wand'}, {'image': <Surface(16x16x32 SW)>, 'name': 'Ring of Restore Mana'}, {'image': <Surface(32x32x24 SW)>, 'name': 'Sip of Mana', 'type': 'potion', 'effects': 'restore_mana', 'restore_amount': 15, 'value': 20}, None]

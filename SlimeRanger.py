@@ -9,11 +9,9 @@
 
 import pygame, sys
 import random
-import time
 import math
-import textwrap
-#import pygame_textinput   
-#import time to actually work on this
+from items import potions, crafting_materials, weapons, trinkets, spell_pages
+
 
 from pygame.locals import *
 
@@ -61,7 +59,6 @@ ingamemenu_savegamebutton = pygame.image.load('graphics/savegamebutton.png')
 ingamemenu_savegamebutton_rect = ingamemenu_savegamebutton.get_rect()
 ingamemenu_savegamebutton_rect.centery = ingamemenu_rect.centery + 50
 ingamemenu_savegamebutton_rect.centerx = ingamemenu_rect.centerx 
-
 
 
 
@@ -139,41 +136,93 @@ def main_menu():
                     sys.exit()
 
 
-            if load_game_button_rect.collidepoint((mx,my)):
-                if click:
-                    loaded_data = load_saved_player_data()
-                    if loaded_data is not None:
-                        if 'player' in loaded_data:
-                            selected_player = loaded_data['name']
-                            enter_village(selected_player)
-                    else:
-                        main_menu()
-                                
+            if click and load_game_button_rect.collidepoint((mx, my)):
+                saved_data = load_saved_player_data()
+                if saved_data is not None:
+                    player = saved_data['player']
+                    selected_player = player.selected_player
+                    player.character_name = saved_data.get('name', '')
+                    player.player_score = saved_data.get('score', 0)
+                    player.player_health = saved_data.get('health', 150)
+                    player.player_mana = saved_data.get('mana', 20)
+                    player.player_level = saved_data.get('level', 0)
+
+                    start_items = random.sample(potions + crafting_materials + weapons + trinkets + spell_pages, 3)
+
+                      # Create an instance of the Player class
+                    #player.selected_player = selected_player  # Set the selected player
+                    # Set the user input
+                    #player.player_score = 0  # Set the player score
+                    #player.player_health = 150
+                    #player.player_mana = 20
+                    #player.player_level = 0
+                    #player.hotbar_items = [] #creating an initial empty hotbar
+
+                    
+                    for i in range(3):
+                        hotbar_slots[i].set_item(start_items[i])
+                    player.hotbar_items = [slot.item for slot in hotbar_slots[:5]]
+
+                    save_player_data(player.selected_player, player.character_name, player.player_score, player.player_health, player.player_mana, player.player_level, player.hotbar_items)
+
+                    enter_village(player)
+                                                
          
         pygame.display.update()
         clock.tick(60)
 
 
-def save_player_data(name, player, score, health, mana, level):
+class Player:
+    def __init__(self, selected_player):
+        self.player_health = 150
+        self.player_mana = 20
+        self.player_level = 0
+        self.player_score = 0
+        self.character_name = ''
+        self.selected_player = selected_player
+        self.vel = 6
+        self.player_gravity = 0
+        self.player_image = self.load_player_image()  # Load the player image based on the selected player
+        self.players_rect = self.player_image.get_rect(center=(250, 650))
+        self.rect = self.players_rect
+        self.hotbar_items = []
+
+    def load_player_image(self):
+        if self.selected_player == 'Treddo':
+            return pygame.image.load('graphics/ingamegraphics/players/treddo.png')
+        elif self.selected_player == 'Rose':
+            return pygame.image.load('graphics/ingamegraphics/players/rose.png')
+        # Add more conditions for other player options if needed
+        else:
+            # Return a default image or handle the case when the player option is not recognized
+            return pygame.image.load('graphics/ingamegraphics/players/treddo.png')
+  
+
+def save_player_data(player, name, score, health, mana, level, hotbar_items):
     with open('save_file.txt', 'w') as file:
-        file.write(f'Player Name: {name}\n')
         file.write(f'Selected Player: {player}\n')
+        file.write(f'Player Name: {name}\n')
         file.write(f'Player Score: {score}\n')
         file.write(f'Player Health: {health}\n')
         file.write(f'Player Mana: {mana}\n')
         file.write(f'Player Level: {level}\n')
+        file.write(f'Hotbar Items: {hotbar_items}\n')
 
+       
 
 def load_saved_player_data():
     try:
         with open('save_file.txt', 'r') as file:
+            
             loaded_data = {}
+            loaded_data['hotbar_items'] = []
             for line in file:
                 line = line.strip()
-                if line.startswith('Player Name:'):
+                if line.startswith('Selected Player:'):
+                    selected_player = line.split(':')[1].strip()
+                    loaded_data['player'] = Player(selected_player)
+                elif line.startswith('Player Name:'):
                     loaded_data['name'] = line.split(':')[1].strip()
-                elif line.startswith('Selected Player:'):
-                    loaded_data['player'] = line.split(':')[1].strip()
                 elif line.startswith('Player Score:'):
                     loaded_data['score'] = int(line.split(':')[1].strip())
                 elif line.startswith('Player Health:'):
@@ -182,20 +231,23 @@ def load_saved_player_data():
                     loaded_data['mana'] = int(line.split(':')[1].strip())
                 elif line.startswith('Player Level:'):
                     loaded_data['level'] = int(line.split(':')[1].strip())
+                elif line.startswith('Hotbar Items:'):
+                    continue  # Skip the "Hotbar Items:" line
+                else:
+                    loaded_data['hotbar_items'].append(line)
+            loaded_data['player'].hotbar_items = loaded_data['hotbar_items']
             return loaded_data
-
     except FileNotFoundError:
         print('save file not found.')
     except Exception as e:
         print(f'Error loading saved player data: {str(e)}')
 
 
-
-
 def character_creation_screen():
+    global selected_player
 
     mx,my = pygame.mouse.get_pos()
-    character = {}  # Dictionary to store character attributes
+    
     click = False
     button_pressed = False
     WHITE = (255, 255, 255)
@@ -219,12 +271,10 @@ def character_creation_screen():
 
     #player_options = ['graphics/ingamegraphics/players/playeroption01.png', 'graphics/ingamegraphics/players/playeroption02.png', 'graphics/ingamegraphics/players/playeroption03.png']
 
-    player_score = 0
-    user_input = ''
+
     selected_player = None
-    player_health = 150
-    player_mana = 10
-    player_level = 0
+    character_name = ''
+
 
 
     clock.tick()
@@ -234,10 +284,12 @@ def character_creation_screen():
         screen.fill('darkgray')
 
         mx,my = pygame.mouse.get_pos()
+        
 
         text_surface = font.render('Enter Hero Name: ', True, (255,255,255))
         text_surface_rect = text_surface.get_rect(topleft = (newplayerscreen_rect.left + 64, newplayerscreen_rect.top + 64))
         #save_data = ''
+        
     
               
 
@@ -250,16 +302,13 @@ def character_creation_screen():
             if event.type == KEYDOWN:
                 if event.key == K_BACKSPACE:
                     # Remove the last character from the user input
-                    user_input = user_input[:-1]
+                    character_name = character_name[:-1]
+                elif event.key == K_RETURN:
+                    break
                 else:
-                # Append the pressed character to the user input
-                    user_input += event.unicode
-
-
-
-                if event.type == KEYDOWN:
-                    if event.key == K_RETURN:
-                        break
+                    # Append the pressed character to the user input
+                    character_name += event.unicode
+                    
 
             if event.type == MOUSEBUTTONDOWN:
                 if event.button == 1 and not button_pressed:
@@ -267,11 +316,12 @@ def character_creation_screen():
                     button_pressed = True
 
 
-
                     if hero_treddo_rect.collidepoint(mx, my):
                         selected_player = 'Treddo'
+                        
                     elif hero_rose_rect.collidepoint(mx, my):
                         selected_player = 'Rose'
+                       
 
                     #if chooseplayerbutton_rect.collidepoint(mx, my):
                         #player_image = pygame.image.load(random.choice(player_options))
@@ -281,12 +331,28 @@ def character_creation_screen():
                 if event.button == 1:
                     button_pressed = False
                 
-        if click and startgamebutton_rect.collidepoint((mx, my)):
-            if user_input and selected_player:
-                save_player_data(selected_player, user_input, player_score, player_health, player_mana, player_level)  # Call a function to save the data
-                enter_village(selected_player)
+            if click and startgamebutton_rect.collidepoint((mx, my)):
+                if character_name and selected_player:
+                    
+                    start_items = random.sample(potions + crafting_materials + weapons + trinkets + spell_pages, 3)
 
+                    player = Player(selected_player)  # Create an instance of the Player class
+                    #player.selected_player = selected_player  # Set the selected player
+                    player.character_name = character_name  # Set the user input
+                    #player.player_score = 0  # Set the player score
+                    #player.player_health = 150
+                    #player.player_mana = 20
+                    #player.player_level = 0
+                    #player.hotbar_items = [] #creating an initial empty hotbar
 
+                    
+                    for i in range(3):
+                        hotbar_slots[i].set_item(start_items[i])
+                    player.hotbar_items = [slot.item for slot in hotbar_slots[:5]]
+
+                    save_player_data(player.selected_player, player.character_name, player.player_score, player.player_health, player.player_mana, player.player_level, player.hotbar_items)
+
+                    enter_village(player)
 
 
         if click and menubutton_rect.collidepoint((mx, my)):
@@ -296,7 +362,7 @@ def character_creation_screen():
         # ... update UI and render the character creation screen ...
         input_x = newplayerscreen_rect.left + 96
         input_y = newplayerscreen_rect.top + 132
-        input_surface = font.render(user_input, True, (0, 0, 0))
+        input_surface = font.render(character_name, True, (0, 0, 0))
         input_surface_rect = pygame.Rect(input_x, input_y, 200, 30)
         screen.blit(newplayerscreen, newplayerscreen_rect)
         screen.blit(text_surface, text_surface_rect)
@@ -324,7 +390,7 @@ def character_creation_screen():
 
         click = False
 
-    return character
+        #return character
 
 
 #This serves to create an in-game menu function outside of the wild and village loops so the main menu can be pressed whenever.
@@ -334,13 +400,17 @@ def show_ingame_menu(selected_player):
     saved_data = load_saved_player_data()
 
     if saved_data is not None:
-        user_input = saved_data.get('player', '')  # Assign the saved name to user_input
-        player_score = saved_data.get('score', '')
-        player_health = saved_data.get('health', 150)
-        player_mana = saved_data.get('mana', 10)
-        player_level = saved_data.get('level', 0)
+        player = Player(selected_player)
+        player.user_input = saved_data.get('player.character_name', '')  # Assign the saved name to user_input
+        player.score = saved_data.get('player.player_score', '')
+        player.health = saved_data.get('player.player_health', 150)
+        player.mana = saved_data.get('player.player_mana', 10)
+        player.level = saved_data.get('player.player_level', 0)
+        player.hotbar_items = saved_data.get('hotbar_items', [])
 
     while True:
+
+        hotbar_items = [slot.item for slot in hotbar_slots]
         #here I am going to add the code that allows the player to open the in game menu
         for event in pygame.event.get():
             
@@ -356,8 +426,7 @@ def show_ingame_menu(selected_player):
                     main_menu()
 
                 if show_ingame_menu and ingamemenu_savegamebutton_rect.collidepoint(event.pos):
-                    save_player_data((selected_player, user_input, player_score, player_health, player_mana, player_level)) #would I also put in player score 
-
+                   save_player_data(player.selected_player, player.user_input, player.player_score, player.player_health, player.player_mana, player.player_level, player.hotbar_items)
 
         
         if show_ingamemenu:
@@ -369,12 +438,231 @@ def show_ingame_menu(selected_player):
 
         pygame.display.update()
         clock.tick(60)
-    
-def enter_village(selected_player):
 
+
+
+hotbar = pygame.image.load('graphics/ingamegraphics/playerhotbar.png')
+hotbar_rect = hotbar.get_rect(topleft=(500, 100))
+
+class HotbarSlot:
+    def __init__(self, item, rect):
+        self.item = item
+        self.rect = rect
+        self.image = pygame.Surface((rect.width, rect.height))
+
+    def set_item(self, item):
+        self.item = item
+
+# Create 5 empty hotbar slots with associated rectangles
+hotbar_x = hotbar_rect.x  # X position of the hotbar
+hotbar_y = hotbar_rect.y  # Y position of the hotbar
+slot_width = 50  # Width of each hotbar slot
+image_scale_factor = 8
+
+hotbar_slots = []
+for i in range(5):
+    slot_rect = pygame.Rect(hotbar_x + i * slot_width, hotbar_y, slot_width, slot_width)
+    hotbar_slots.append(HotbarSlot(None, slot_rect))
+
+# Display the hotbar
+screen.blit(hotbar, hotbar_rect)
+
+# Blit the spell page image onto the corresponding slot's rectangle
+for slot in hotbar_slots:
+    print("Loop executed")
+    if slot.item:
+        print(f"Image dimensions: {slot.item.image.get_width()} x {slot.item.image.get_height()}")
+        scaled_item_image = pygame.transform.scale(slot.item.image, (slot_width * image_scale_factor, slot_width * image_scale_factor))
+        screen.blit(scaled_item_image, slot.rect)
+        print('Item exists')
+    else:
+        print('No item seen')
+
+
+
+hotbar_slot_selected = None  # Initially select the first hotbar slot
+
+def update_hotbar_selection(keys):
+    global hotbar_slot_selected
+
+    if keys[pygame.K_1]:
+        hotbar_slot_selected = hotbar_slots[0]  # Select hotbar slot 1
+        print("Selected Slot: 1")
+        print("Item in the Slot:", hotbar_slot_selected.item)  # Print the item in the selected slot
+
+    elif keys[pygame.K_2]:
+        hotbar_slot_selected = hotbar_slots[1]  # Select hotbar slot 2
+        print("Selected Slot: 2")
+        print("Item in the Slot:", hotbar_slot_selected.item)
+
+
+    elif keys[pygame.K_3]:
+        hotbar_slot_selected = hotbar_slots[2]  # Select hotbar slot 3
+        print("Selected Slot: 3")
+        print("Item in the Slot:", hotbar_slot_selected.item)
+    elif keys[pygame.K_4]:
+        hotbar_slot_selected = hotbar_slots[3]  # Select hotbar slot 3
+        print("Selected Slot: 4")
+        print("Item in the Slot:", hotbar_slot_selected.item)
+
+    elif keys[pygame.K_5]:
+        hotbar_slot_selected = hotbar_slots[4]  # Select hotbar slot 3
+        print("Selected Slot: 5")
+        print("Item in the Slot:", hotbar_slot_selected.item)
+    # Add more key bindings for other hotbar slots
+
+    return hotbar_slot_selected
+
+def draw_hotbar_selection():
+    for slot in hotbar_slots:
+        if slot is hotbar_slot_selected:
+            pygame.draw.rect(screen, (255, 0, 0), slot.rect, 2)
+        else:
+            pygame.draw.rect(screen, (0, 0, 0), slot.rect, 2)
+
+#creating an empty list of magic attacks to be used inside of the use item loop for spell pages
+magic_attacks = []
+
+
+# Function for using an item inside of the selected slot. 1-5
+def use_item(slot, player, magic_attacks):
+  
+    mouse_position = pygame.mouse.get_pos()
+    
+    if slot:
+        # Get the item from the selected hotbar slot
+        item = slot.item
+        
+        # Check the type of item and perform the corresponding actions
+        if isinstance(item, dict):
+            # Check the type of item based on its dictionary structure
+            if item['type'] == 'spell':
+
+                print("Spell page item is being used!")
+                
+                if item['name'] == 'Arcane Ball':
+                    print('Arcane Ball was cast')
+                    
+                    if player.player_mana >= item['mana_cost']:
+                        player.player_mana -= item['mana_cost']
+
+                        # Fire magic attack
+                        magic_attack_rect = item['magic_attack_image'].get_rect()
+                        magic_attack_rect.center = player.players_rect.center
+                        dx = mouse_position[0] - magic_attack_rect.centerx
+                        dy = mouse_position[1] - magic_attack_rect.centery
+
+                        magnitude = math.sqrt(dx ** 2 + dy ** 2)
+                        direction = (dx / magnitude, dy / magnitude)
+
+                        spell_speed = item['spell_speed']
+
+                        magic_attack_rect.x += direction[0] * spell_speed
+                        magic_attack_rect.y += direction[1] * spell_speed
+
+                        magic_attacks.append((magic_attack_rect, direction))
+
+                        print('Arcane Ball has consumed:', item['mana_cost'])
+
+                    else:
+                        print('Not enough mana')
+
+                elif item['name'] == 'Ball of Flame':
+                    print('Ball of Flame was cast')
+
+                    if player.player_mana >= item['mana_cost']:
+                        player.player_mana -= item['mana_cost']
+
+                        # Fire magic attack
+                        magic_attack_rect = item['magic_attack_image'].get_rect()
+                        magic_attack_rect.center = player.players_rect.center
+                        dx = mouse_position[0] - magic_attack_rect.centerx
+                        dy = mouse_position[1] - magic_attack_rect.centery
+
+                        magnitude = math.sqrt(dx ** 2 + dy ** 2)
+                        direction = (dx / magnitude, dy / magnitude)
+
+                        spell_speed = item['spell_speed']
+
+                        magic_attack_rect.x += direction[0] * spell_speed
+                        magic_attack_rect.y += direction[1] * spell_speed
+
+                        magic_attacks.append((magic_attack_rect, direction))
+
+                        print('Ball of Flame has consumed:', item['mana_cost'])
+
+                    else:
+                        print('Not enough mana')
+                
+                # ...
+                return player
+            
+        
+
+            elif item['type'] == 'potion':
+                # Check the effect of the potion and restore health or mana accordingly
+                if item['name'] == 'Sip of Health':
+                    player.player_health += item['restore_amount']
+                    print('sip of health was used')
+                    print(player.player_health)
+
+                elif item['name'] == 'Sip of Mana':
+                    player.player_mana += item['restore_amount']  
+                    print('sip of mana was used')
+                    print(player.player_mana)
+                    
+                slot.item = None
+                    
+                return  # No need to return player attributes here
+                # ...
+            elif item['type'] == 'trinket':
+                
+                if item['name'] == 'Ring of Restore Mana':
+                    
+                    player.player_health -= item['restore_amount']
+                    player.player_mana += item['restore_amount']
+                    print('ring was used')
+                    print(player.player_health)
+                    print(player.player_mana)
+                    # Perform the actions for activating the trinket
+                    # ...
+            elif item['type'] == 'weapon':
+                if item['name'] == 'Twig Wand':
+                    print('twig wand is equipped')
+                    # Use the weapon based on the mouse position and weapon attributes
+                    # ...
+                elif item['name'] == 'Crystal Staff':
+                    print('crystal staff is equipped')
+                    # Use the weapon based on the mouse position and weapon attributes
+                    # ...
+                # ...
+            elif item['type'] == 'crafting_material':
+                if item['name'] == 'Slime Eyes':
+                    print('slimey')
+                
+                if item['name'] == 'Stone Fragment':
+                    print('oh shiney')
+
+    return player
+
+
+
+        # ...
+def enter_village(player):
+    global player_health
+    global player_mana
+   
 
     screen.fill("lightgray")
 
+    # Render the hotbar
+    screen.blit(hotbar, hotbar_rect)
+    hotbar_items = [slot.item for slot in hotbar_slots]
+    hotbar_slots[0]
+    
+
+    # Update the display
+    pygame.display.flip()
 
     #Environment Variables
     gravity = 0.2
@@ -386,20 +674,35 @@ def enter_village(selected_player):
     elapsed_time = 0
 
     #Player Variables
-    vel = 6
-    player_gravity = 0
-    players_image = pygame.image.load(f'graphics/ingamegraphics/players/{selected_player.lower()}.png')  # Load the image based on the selected player
-    players_rect = players_image.get_rect(center=(250, 650))
+    #vel = 6
+    #player_gravity = 0
+    #projectiles = []
+
+
+    #players_image = pygame.image.load(f'graphics/ingamegraphics/players/{selected_player.lower()}.png')  # Load the image based on the selected player
+    #players_rect = players_image.get_rect(center=(250, 650))
     show_inventory = False
     show_ingamemenu = False
     interact = False
     can_interact = False
-
+    beingused = False
+    
+    #health = player.player_health
 
 
     #the nps rects will eventually be made into a list and will have about 5 or 6 npc's displayed every time
+    #The village chief
     villagechief_image = pygame.image.load('graphics/village/chiefbrune.png')
     villagechief_image_rect = villagechief_image.get_rect(center=(350, 750))
+
+    #The merchant guy
+    villagemerchant = pygame.image.load('graphics/village/zeraphpotter.png')
+    villagemerchant_rect = villagemerchant.get_rect(center=(450, 750))
+
+
+
+
+
 
     #Non-Playable Character Variables also known as NPC's
     show_npcdialogbox = False
@@ -433,27 +736,26 @@ def enter_village(selected_player):
     #objects loaded in the village such as signs, spawn, and houses
     thewilds_sign = pygame.image.load('graphics/ingamegraphics/thewildsign.png')
     thewildsign_rect = thewilds_sign.get_rect(left = 0, bottom = groundtile_rect.top)
+
+    #Spawn Crystal
     village_spawn = pygame.image.load('graphics/village/spawncrystal.png')
     village_spawn_rect = village_spawn.get_rect(left = 600, bottom = groundtile_rect.top)
+
+
+    #Chief's House
     village_hall = pygame.image.load('graphics/village/villagehall.png')
     village_hall_rect = village_hall.get_rect(left = 200, bottom = groundtile_rect.top)
 
+
+    #Zeraph Potter's stuff
+
+    
 
     #User Interface Variables
     player_inventory_image = pygame.image.load('graphics/ingamegraphics/playerinventory.png')
     player_inventory_rect = pygame.Rect(200,200, player_inventory_image.get_width(), player_inventory_image.get_height())
     inventoryexit_button = pygame.image.load('graphics/ingamegraphics/inventory_exit_button.png')
     inventoryexit_button_rect = pygame.Rect(player_inventory_rect.right - 32, player_inventory_rect.top, 30,30)
-
-
-    saved_data = load_saved_player_data()
-
-    if saved_data is not None:
-        user_input = saved_data.get('player', '')  # Assign the saved name to user_input
-        player_score = saved_data.get('score', '')
-        player_health = saved_data.get('health', 150)
-        player_mana = saved_data.get('mana', 10)
-        player_level = saved_data.get('level', 0)
 
 
 
@@ -463,6 +765,9 @@ def enter_village(selected_player):
 
 
     while running:
+
+      
+        
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
@@ -485,7 +790,8 @@ def enter_village(selected_player):
                         running = False
                         main_menu()
                     if ingamemenu_savegamebutton_rect.collidepoint(event.pos):
-                        save_player_data(selected_player, user_input, player_score, player_health, player_mana, player_level)
+                        player.hotbar_items = [slot.item for slot in hotbar_slots[:5]]
+                        save_player_data(player.selected_player, player.character_name, player.player_score, player.player_health, player.player_mana, player.player_level, player.hotbar_items)
 
 
                 if event.button == 1 and npcexitbutton_rect.collidepoint(event.pos):
@@ -497,33 +803,50 @@ def enter_village(selected_player):
                     show_ingamemenu = True
 
 
+
         #my logic handling player gravity, and what actually makes my character fall
-        player_gravity += gravity
-        players_rect.y += player_gravity
+        player.player_gravity += gravity
+        player.players_rect.y += player.player_gravity
 
         #here I am handling NPC logic and gravity and I might have to add gravity per npc unless I discover a better way
         npc_gravity += gravity
         villagechief_image_rect.y += npc_gravity
+        villagemerchant_rect.y += npc_gravity
+        health_potion_chance = 0.25
         
 
         #environment logic
         #elapsed_time += clock.tick(60)
-      
 
-        if players_rect.bottom >= groundtile_rect.top:
-            players_rect.bottom = groundtile_rect.top
-            player_gravity = 0
+        if player.players_rect.bottom >= groundtile_rect.top:
+            player.players_rect.bottom = groundtile_rect.top
+            player.player_gravity = 0
         
         if villagechief_image_rect.bottom >= groundtile_rect.top:
             villagechief_image_rect.bottom = groundtile_rect.top
             npc_gravity = 0
 
 
-
         screen.fill("lightgray")
         screen.blit(thewilds_sign, thewildsign_rect)
         screen.blit(village_spawn, village_spawn_rect)
         screen.blit(village_hall, village_hall_rect)
+        screen.blit(hotbar, hotbar_rect)
+
+
+        keys = pygame.key.get_pressed()
+
+        for i, slot in enumerate(hotbar_slots):
+            screen.blit(slot.image, slot.rect)
+
+            if slot.item:
+                # Calculate the position to blit the item image inside the slot
+                item_x = slot.rect.x + (slot.rect.width - slot.item['image'].get_width()) // 2
+                item_y = slot.rect.y + (slot.rect.height - slot.item['image'].get_height()) // 2
+
+                # Blit the item image onto the hotbar slot
+                screen.blit(slot.item['image'], (item_x, item_y))
+             
 
         for y in range(screen_height - ground_tile_height * ground_depth, screen_height, ground_tile_height):
             for x in range(0, screen_width, ground_tile_height):
@@ -532,40 +855,63 @@ def enter_village(selected_player):
                 else:
                     screen.blit(undergroundtile, (x, y))
 
-        keys = pygame.key.get_pressed()
-
+        
         if keys[pygame.K_LEFT] or keys[pygame.K_a]: #yay movement, this was more challening than initially though
             #print('left was pressed')
-            players_rect.x -= vel + 1
+            player.players_rect.x -= player.vel + 1
 
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            players_rect.x += vel
+            player.players_rect.x += player.vel
         
         if keys[pygame.K_i]:
             show_inventory = True
 
-        if keys[pygame.K_e]:
-            interact = True
-            #interact = False
-      
-        if interact:
-            if players_rect.colliderect(villagechief_image_rect):
-                show_npcdialogbox = True
-            else:
-                # Calculate the distance between player and NPC
-                distance = abs(players_rect.centerx - villagechief_image_rect.centerx)
-                if distance >= 32:  # Adjust the threshold as needed
-                    interact = False
-                    show_npcdialogbox = False
-                    npc_dialog_text = None
-
+ 
+        if keys[pygame.K_SPACE]:
         
+            # Check if a hotbar slot is selected
+            print('space was pressed')
+                    
+            # Check if a hotbar slot is selected
+            if hotbar_slot_selected:
+                use_item(hotbar_slot_selected, player, magic_attacks)
+                print('item is supposedly used')
+                #hotbar_slot_selected = None
 
-        if players_rect.colliderect(thewildsign_rect):
-            player_gravity = 0
-            save_player_data(selected_player, user_input, player_score, player_health, player_mana, player_level)
 
-            enter_wilds(selected_player)
+
+        update_hotbar_selection(keys)
+        draw_hotbar_selection()
+        
+    
+        if keys[pygame.K_e] and player.players_rect.colliderect(villagechief_image_rect):
+            show_npcdialogbox = True
+
+            # Check if the player gets a mana/health potion
+            if random.random() <= health_potion_chance:
+                # Check if there is an empty slot among the first 4 hotbar slots
+                empty_slot = next((slot for slot in hotbar_slots[:4] if slot.item is None), None)
+                if empty_slot:
+                    # Give the player a mana/health potion and set it in the empty slot
+                    potion_name = random.choice(['Sip of Health', 'Sip of Mana'])
+                    potion = next((potion for potion in potions if potion['name'] == potion_name), None)
+                    if potion:
+                        empty_slot.set_item(potion)
+
+
+        if keys[pygame.K_a] or keys[pygame.K_d]:
+            distance = abs(player.players_rect.centerx - villagechief_image_rect.centerx)
+            if distance >= 32:  # Adjust the threshold as needed
+                #interact = False
+                show_npcdialogbox = False
+                    
+                    
+  
+        if keys[pygame.K_e] and player.players_rect.colliderect(thewildsign_rect):
+            player.player_gravity = 0
+            save_player_data(player.selected_player, player.character_name, player.player_score, player.player_health, player.player_mana, player.player_level, player.hotbar_items)
+
+            enter_wilds(player)
   
 
         if show_npcdialogbox:
@@ -601,12 +947,50 @@ def enter_village(selected_player):
             screen.blit(player_inventory_image, player_inventory_rect)
             screen.blit(inventoryexit_button, inventoryexit_button_rect)
 
-        screen.blit(players_image, players_rect)
+        screen.blit(player.player_image, player.players_rect)
         screen.blit(villagechief_image, villagechief_image_rect)
+        screen.blit(villagemerchant, villagemerchant_rect)
+
+        # Update projectile positions
+   
+
+        #active displays of health and mana
+
+        #health
+        player_health_base = pygame.Rect(100, 175, 150, 27)
+        player_health_active = pygame.Rect(100, 175, int(player.player_health), 27)
+        
+        # Here I want to load text to add to my health bars
+        health_text = font.render("Hp: " + str(player.player_health), False, (65,67,69))
+        health_text_rect = health_text.get_rect(topleft = (100,173))
+
+        # Here I am drawing instead of blitting my health bars
+        pygame.draw.rect(screen, (200, 15, 15), player_health_base)
+        pygame.draw.rect(screen, (15, 200, 15), player_health_active)
+
+        #here I am going to draw/render/blit my health text to the rects.
+        screen.blit(health_text, health_text_rect)
+
+        #mana
+        player_mana_base = pygame.Rect(100, 250, 150, 27)
+        player_mana_active = pygame.Rect(100, 250, player.player_mana, 27)
+        
+        # Here I want to load text to add to my mana bars
+        mana_text = font.render("Mp: " + str(player.player_mana), False, (100,100,100))
+        mana_text_rect = mana_text.get_rect(topleft = (100, 250))
+
+        # Here I am drawing instead of blitting my mana bars
+        pygame.draw.rect(screen, (15, 15, 100), player_mana_base)
+        pygame.draw.rect(screen, (50, 50, 200), player_mana_active)
+
+        #here I am going to draw/render/blit my mana text to the rects.
+        screen.blit(mana_text, mana_text_rect)
+
+        update_hotbar_selection(keys)
+        draw_hotbar_selection()
 
         pygame.display.update()
         clock.tick(60)
-
 
 
     pygame.quit()
@@ -615,6 +999,19 @@ def enter_village(selected_player):
 #the above is the village loop where the player can interact with npc's buy and sell items, and have a safe place from enemies, and respawn if fallen in combat
 
 #the below code will pertain to my other active states where the player can explore environments, defeat enemies and gather resources and items.
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #I am going to attempt to make my first enemy class that can then contain multiple enemies instead of just my one earthslime enemy so far.
@@ -656,35 +1053,51 @@ class Enemy:
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
+
         
 
 
+
+
+
+
+
+
+
+
 #The wilds is the first area that the player will be able to explore other than the village.
-def enter_wilds(selected_player):
+def enter_wilds(player):
+
+    
 
 
     #Here I want all my player variables
     vel = 6 #vel, short for velocity, could be called 'movement' but represents the rate at which it will move.
     gravity = 0.2
-    player_gravity = 0.0
+    player.player_gravity = 0.0
     jumping = False
     jump_count = 12
     can_jump = True
     jump_speed = 0.15
-    spell_cast_timer = 0
+    spell_cast_timer = 1000
     spell_speed = 10
     magic_attacks = []
     spell_damage = 5
 
+
     #Here I want my Environment vairables
     ground_depth = 3
     ground_tile_height = 32
+  
 
 
     #Here I want logic variables like inventories, items, interactables, and options.
     show_inventory = False
     show_ingamemenu = False
+    hotbarslot01_selected = False
 
+    #for now I am placing my spell variables here even though I wish to turn it into a different .py file and import them to reduce overall code.
+    #spell variables
 
     #here I want all of my enemy variables
     earthslime_image = pygame.image.load('graphics/ingamegraphics/earthslime.png')
@@ -717,7 +1130,7 @@ def enter_wilds(selected_player):
 
         ]
     
-
+    #enemy variables the reflect the above class enemy and enemy options, starts with an empty list , a max count with the initial start being zero. then the timer and interval.
     enemies = []
     max_enemies = 10
     current_enemies = 0
@@ -731,38 +1144,29 @@ def enter_wilds(selected_player):
     groundtile = pygame.image.load('graphics/ingamegraphics/grassblock.png')
     undergroundtile = pygame.image.load('graphics/ingamegraphics/dirtblock.png')
 
-    #Player, enemies, and others.
+    #Player, enemies, and other variables.
     #players_image = pygame.image.load('graphics/player.png')
-    players_image = pygame.image.load(f'graphics/ingamegraphics/players/{selected_player.lower()}.png')  # Load the image based on the selected player
+    #players_image = pygame.image.load(f'graphics/ingamegraphics/players/{selected_player.lower()}.png')  # Load the image based on the selected player
+    player_inventory_image = pygame.image.load('graphics/ingamegraphics/playerinventory.png')
+    inventoryexit_button = pygame.image.load('graphics/ingamegraphics/inventory_exit_button.png')
+    hotbar = pygame.image.load('graphics/ingamegraphics/playerhotbar.png')
 
     magic_attack = pygame.image.load('graphics/ingamegraphics/manablast.png')
     sign_village = pygame.image.load('graphics/ingamegraphics/townsign.png')
 
-    #the Inventory the player can see when they press 'i'
-    player_inventory_image = pygame.image.load('graphics/ingamegraphics/playerinventory.png')
-    inventoryexit_button = pygame.image.load('graphics/ingamegraphics/inventory_exit_button.png')
-  
 
     #Here is where I handle the wilds in-game rects for player, enemies, and environment.
     #Environment rects, Player Rect.
     groundtile_rect = pygame.Rect(0, screen_height - 96, screen_width, 32)
-    players_rect = players_image.get_rect(center = (250, 350))
-    sign_rect = sign_village.get_rect(left =0, bottom = groundtile_rect.top)
+    #players_rect = players_image.get_rect(center = (250, 350))
+    sign_rect = sign_village.get_rect(left = 600, bottom = groundtile_rect.top)
 
 
     #Player inventory Rects
     player_inventory_rect = pygame.Rect(200,200, player_inventory_image.get_width(), player_inventory_image.get_height())
     inventoryexit_button_rect = pygame.Rect(player_inventory_rect.right - 32, player_inventory_rect.top, 30,30)
+    hotbar_rect = hotbar.get_rect(topleft= (800, 500))
 
-
-
-    saved_data = load_saved_player_data()
-    if saved_data is not None:
-        user_input = saved_data.get('player', '')  # Assign the saved name to user_input
-        player_score = saved_data.get('score', '')
-        player_health = saved_data.get('health', 150)
-        player_mana = saved_data.get('mana', 10)
-        player_level = saved_data.get('level', 0)
 
     running = True
     
@@ -771,8 +1175,8 @@ def enter_wilds(selected_player):
         
         elapsed_time = clock.tick(60)
 
-        player_gravity += gravity
-        players_rect.y += player_gravity
+        player.player_gravity += gravity
+        player.players_rect.y += player.player_gravity
 
         spell_cast_timer -= elapsed_time
         spawn_timer += elapsed_time
@@ -781,7 +1185,23 @@ def enter_wilds(selected_player):
         screen.blit(sign_village, sign_rect)
         #handle_enemy_collision(player_health)
 
-        
+
+
+        for i, slot in enumerate(hotbar_slots):
+            screen.blit(slot.image, slot.rect)
+
+            if slot.item:
+                # Calculate the position to blit the item image inside the slot
+                item_x = slot.rect.x + (slot.rect.width - slot.item['image'].get_width()) // 2
+                item_y = slot.rect.y + (slot.rect.height - slot.item['image'].get_height()) // 2
+
+                # Blit the item image onto the hotbar slot
+                
+
+                screen.blit(slot.item['image'], (item_x, item_y))
+                #print(f"Item {i+1}: {slot.item}")
+                #print(f"Item position: ({item_x}, {item_y})")
+
 
         for y in range(screen_height - ground_tile_height * ground_depth, screen_height, ground_tile_height):
             for x in range(0, screen_width, ground_tile_height):
@@ -833,48 +1253,23 @@ def enter_wilds(selected_player):
 
         for enemy in enemies:
             enemy.update(gravity)
-            enemy.handle_collision(groundtile_rect, players_rect, player_health)
-            enemy.move(players_rect)
-            player_health = enemy.handle_collision(groundtile_rect, players_rect, player_health)
+            enemy.handle_collision(groundtile_rect, player.players_rect, player.player_health)
+            enemy.move(player.players_rect)
+            player.player_health = enemy.handle_collision(groundtile_rect, player.players_rect, player.player_health)
             enemy.draw(screen)
 
-            
-            
-            #if enemy_rect.y > screen_height:
-                #if the slime somehow goes off screen it will be removed
-                #enemy_list.remove(enemy_rect)
-                #current_slimes -= 1
-                #continue
-          
-           # if enemy_rect.colliderect(groundtile_rect):
-                #enemy_rect.y = groundtile_rect.y - enemy_rect.height  
-               # enemy_gravity = 0
-                #dx = players_rect.x - enemy_rect.x
-               #dy = players_rect.y - enemy_rect.y
-               # distance = math.sqrt(dx ** 2 + dy ** 2)
-                
-
-            # Adjust slime's x-coordinate towards the player (a mighty thanks to the chatgpt no shame in the game)
-               # if dx >= 50 or dx <= -50:
-                  #aaaaa  enemy_rect.x += vel * (dx / distance)
+       
 
 
-            #if enemy_rect.colliderect(players_rect):
-                #player_health -= 1
-
-        #adding in a collision dectection to stop when the player touches the ground
-
-
-
-        if players_rect.colliderect(groundtile_rect):
-            players_rect.y = groundtile_rect.y - players_rect.height
-            player_gravity = 0
+        if player.players_rect.colliderect(groundtile_rect):
+            player.players_rect.y = groundtile_rect.y - player.players_rect.height
+            player.player_gravity = 0
             can_jump = True
 
         
         if jumping: #this is for the player might try to do something similar for my slime enemies.
             if jump_count >= -12:
-                players_rect.y -= (jump_count * abs(jump_count)) * jump_speed
+                player.players_rect.y -= (jump_count * abs(jump_count)) * jump_speed
                 jump_count -= .8
             else:
                 jumping = False
@@ -904,7 +1299,7 @@ def enter_wilds(selected_player):
                         running = False
                         main_menu()
                     if ingamemenu_savegamebutton_rect.collidepoint(event.pos):
-                        save_player_data(selected_player, user_input, player_score, player_health, player_mana, player_level)
+                        save_player_data(player.selected_player, player.user_input, player.player_score, player.player_health, player.player_mana, player.player_level, player.hotbar_items)
 
 
 
@@ -914,13 +1309,40 @@ def enter_wilds(selected_player):
     
               
         keys = pygame.key.get_pressed()
+        update_hotbar_selection(keys)
+        draw_hotbar_selection()
 
         if keys[pygame.K_LEFT] or keys[pygame.K_a]: #yay movement, this was more challening than initially though
             #print('left was pressed')
-            players_rect.x -= vel + 1
+            player.players_rect.x -= vel + 1
 
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            players_rect.x += vel
+            player.players_rect.x += vel
+
+        if keys[pygame.K_e]:
+            if hotbar_slot_selected:
+                use_item(hotbar_slot_selected, player, magic_attacks)
+                print('item is supposedly used')
+        
+        #hotbar_slot = hotbar_slots[0]
+
+        #if keys[pygame.K_1]:
+            #hotbar_slot_selected = hotbar_slot
+            #pygame.draw.rect(screen, (255,0,0), slot_rect, 2)
+            #hotbar_slot = hotbar_slots[0]  # Selected hotbar slot 1
+            #if hotbar_slot.item:
+                # Perform the action for using the item (casting the spell)
+                #spell_page = hotbar_slot.item
+                #cast_spell()
+            #else:
+                #pass
+                # No item in the selected hotbar slot
+                # Handle accordingly
+
+                #I need to tell chatgpt that I only want the event or key press '1' to select the 1st slot. the spell does not get cast unless
+                #the player presses space and the 1st slot in the hotbar is selected it will fire the selected spell's attack image.
+                #I will eventually have items in the hotbar that do other things.
+
         
         
         if keys[pygame.K_i]:
@@ -940,14 +1362,19 @@ def enter_wilds(selected_player):
 
         if keys[pygame.K_UP] or keys[pygame.K_w] and can_jump: #jump is not that bad right now but there is a slight bug. Player can repeatedly jump until they are floating.
             jumping = True
-            player_gravity = 0
+            player.player_gravity = 0
             can_jump = False
-            
+
         if spell_cast_timer <= 0:
-            if keys[pygame.K_SPACE]: #I had a hard time figuring out how to shoot a projectile. 
+            if keys[pygame.K_SPACE] and player.player_mana >= 8: #I had a hard time figuring out how to shoot a projectile. 
+
+
+                #THE BELOW WILL BE COMMENTED OUT AND SAVED AS MY FIRST RUDIMENTARY ATTACK SYSTEM. IT ONLY GETS BETTER FROM HERE
+                #subtract from player's current mana
+                player.player_mana -= 8
                 # Fire magic attack
                 magic_attack_rect = magic_attack.get_rect()
-                magic_attack_rect.center = players_rect.center
+                magic_attack_rect.center = player.players_rect.center
                 # Get the direction from the player to the mouse position
                 mouse_x, mouse_y = pygame.mouse.get_pos()
                 dx = mouse_x - magic_attack_rect.centerx
@@ -985,9 +1412,9 @@ def enter_wilds(selected_player):
                         #enemy.rect.y = -enemy.rect.height
 
                     #adds one to the player_score or enemies killed, I really need to pick one and stick with it.
-                    player_score += 2
-                    player_level += 1
-                    player_health += 10
+                    player.player_score += 2
+                    player.player_level += 1
+                    #player.player_health += 10
 
                     # Remove the magic attack
                     if (magic_attack_rect,direction) in magic_attacks:
@@ -997,16 +1424,18 @@ def enter_wilds(selected_player):
             screen.blit(magic_attack, magic_attack_rect)
         
         #here I want to clearly define my player's score and it's rect.
-        player_score_text = font.render("Player Score: " + str(player_score), False, (50, 50, 75))
+        player_score_text = font.render("Player Score: " + str(player.player_score), False, (50, 50, 75))
         player_score_text_rect = player_score_text.get_rect(midleft = (50, 125)) #this is not a button it's the 'background' to the text
         screen.blit(player_score_text,player_score_text_rect)
 
+
+        #health
         player_health_base = pygame.Rect(100, 175, 150, 27)
-        player_health_active = pygame.Rect(100, 175, player_health, 27)
+        player_health_active = pygame.Rect(100, 175, player.player_health, 27)
         
             
          # Here I want to load text to add to my health bars
-        health_text = font.render("Hp: " + str(player_health), False, (65,67,69))
+        health_text = font.render("Hp: " + str(player.player_health), False, (65,67,69))
         health_text_rect = health_text.get_rect(topleft = (100,173))
 
             
@@ -1019,29 +1448,46 @@ def enter_wilds(selected_player):
 
         #here I am going to draw/render/blit my health text to the rects.
         screen.blit(health_text, health_text_rect)
-        #screen.blit(playerlevel_text, playerlevel_text_rect)
+        
+        #mana
+        player_mana_base = pygame.Rect(100, 250, 150, 27)
+        player_mana_active = pygame.Rect(100, 250, player.player_mana, 27)
+        
+        # Here I want to load text to add to my mana bars
+        mana_text = font.render("Mp: " + str(player.player_mana), False, (100,100,100))
+        mana_text_rect = mana_text.get_rect(topleft = (100, 250))
+
+        # Here I am drawing instead of blitting my mana bars
+        pygame.draw.rect(screen, (15, 15, 100), player_mana_base)
+        pygame.draw.rect(screen, (50, 50, 200), player_mana_active)
+
+        #here I am going to draw/render/blit my mana text to the rects.
+        screen.blit(mana_text, mana_text_rect)
 
 
 
-        if players_rect.colliderect(sign_rect):
-            player_gravity = 0
-            save_player_data(selected_player, user_input, player_score, player_health, player_mana, player_level)
-            enter_village(selected_player)
+        if keys[pygame.K_e] and player.players_rect.colliderect(sign_rect):
+            player.player_gravity = 0
+            interact = False
+            #save_player_data(player.selected_player, player.character_name, player.player_score, player.player_health, player.player_mana, player.player_level, player.hotbar_items)
+            enter_village(player)
 
-        if player_health >= 150:
-            player_health = 150
+        if player.player_health >= 160:
+            player.player_health = 150
 
-        if player_health <= 0:
-            player_score -= 10
-            player_health = 25
-            save_player_data(selected_player, user_input, player_score, player_health, player_mana, player_level)
-            enter_village(selected_player)
+        if player.player_health <= 0:
+            player.player_score -= 10
+            player.player_health = 25
+            save_player_data(player.selected_player, player.character_name, player.player_score, player.player_health, player.player_mana, player.player_level, player.hotbar_items)
+            enter_village(player)
 
-        #if player_score % 10:
-            #player_level += 1
 
-        screen.blit(players_image,players_rect)
+
+        screen.blit(player.player_image, player.players_rect)
         screen.blit(player_score_text, player_score_text_rect)
+        screen.blit(hotbar, hotbar_rect)
+        update_hotbar_selection(keys)
+        draw_hotbar_selection()
 
 
         pygame.display.update()
